@@ -15,7 +15,7 @@ pip install -r requirements.txt && pip install -e .
 ```bash
 make test        # 15 tests, incl. closed-form vs statevector to 1e-9
 make demo        # smoke config (~1 s) -> results/summary.json
-make tables      # results/main_results.{tex,md}
+make tables      # results/main_results.tex
 make figures     # figures/fig_frontier.pdf, figures/fig_family.pdf
 make audit       # readiness gate
 make full-run    # reported-scale config (minutes)

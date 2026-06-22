@@ -48,10 +48,18 @@ We address this gap with a deliberately honest, fully reproducible benchmark. Ou
 Our central finding is reported without embellishment. The learned graph-conditioned policy and the simple spectral initializer reach \emph{the same} held-out approximation ratio to within statistical resolution, both clearly above random initialization. Topology-conditioned warm starts thus \emph{match}, not exceed, spectral initialization for depth-one QAOA. We argue this is the expected outcome---both encode the relevant spectral structure of these landscapes---and we present it as a useful, controlled result together with a reusable evaluation framework and a clear query-efficiency benefit, rather than as a claim of superiority on solution quality. The study makes no quantum-hardware claim, addresses only depth one and exact-MaxCut-tractable sizes, and uses synthetic graphs.
 
 \section{Results}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{fig_schematic.pdf}
+\caption{\textbf{Overview of the topology-conditioned QAOA warm-start benchmark.} A connected graph instance drawn from one of six families is mapped by a proven relabeling-invariant descriptor $\phi(G)$---built from degree, motif, hashed Weisfeiler--Lehman, cycle, Laplacian-spectral and connectivity blocks---to a fixed-length feature vector. A warm-start policy turns this descriptor into initial depth-one QAOA angles $(\gamma_0,\beta_0)$, which seed a refiner that counts \emph{every} objective evaluation against a fixed query budget $B$; cut quality is then scored as an exact approximation ratio against a brute-force MaxCut oracle. Two internal guarantees underpin the benchmark: the analytic per-edge objective and an exact statevector simulator agree to $10^{-9}$, and the descriptor is invariant to node relabeling to $10^{-8}$ ($\phi(\pi G)=\phi(G)$). All policies are compared under family-held-out splits with a programmatic leakage check.}
+\label{fig:schematic}
+\end{figure}
+
 \subsection{Problem setup and the budgeted-warm-start framework}
 For MaxCut on $G=(V,E)$ the cost operator is $C=\sum_{(u,v)\in E}\tfrac12(1-Z_uZ_v)$, and depth-$p$ QAOA prepares $\ket{\bm{\gamma},\bm{\beta}}=\prod_{\ell=1}^{p}e^{-\mathrm{i}\beta_\ell B}e^{-\mathrm{i}\gamma_\ell C}\ket{+}^{\otimes n}$ with mixer $B=\sum_v X_v$, and maximizes $\expval{C(\bm{\gamma},\bm{\beta})}$. We work at depth $p=1$ and compute $\expval{C}$ two independent ways: a full statevector simulator (cost $O(p\,n\,2^n)$, the reference oracle) and the analytic per-edge closed form of Wang et al.~\cite{wang2018quantum} (cost $O(\abs{E})$; Methods, Eq.~\eqref{eq:closedform}). The two agree to $10^{-9}$ on graphs from every family, so all reported objective values are exact depth-one expectations. The quality of a cut is the approximation ratio $\expval{C}/C^\star$ against the true MaxCut $C^\star$, obtained by exact enumeration of the $2^{n-1}$ distinct bipartitions (tractable for $n\le16$); all ratios in this paper are ground truth, not relaxation bounds.
 
-A warm-start policy maps a graph to initial angles $(\gamma_0,\beta_0)$ that seed a coordinate-ascent refiner. The refiner \emph{counts every call} to the objective and stops when a per-graph budget of evaluations is exhausted, so the running-best approximation ratio as a function of the number of evaluations---the \emph{query-budget frontier}---is a faithful, hardware-relevant comparison. We compare five policies: \emph{random} (uniform angles), \emph{spectral} ($\gamma_0$ from Laplacian algebraic connectivity, $\beta_0=\pi/8$), \emph{topology} (a non-learned fixed-angle heuristic scaled by mean degree), \emph{graph-conditioned} (the learned policy: a $k$-nearest-neighbour regressor over standardized relabeling-invariant descriptors, fit on training graphs only), and \emph{rl} (a cross-entropy-method refiner seeded by the graph-conditioned proposal). To test transfer honestly, for each held-out family we fit the learned policy only on graphs from the other five families and evaluate on the held-out one; a fingerprint-based leakage check confirms no test graph appears in training.
+Figure~\ref{fig:schematic} summarizes the end-to-end pipeline. A warm-start policy maps a graph to initial angles $(\gamma_0,\beta_0)$ that seed a coordinate-ascent refiner. The refiner \emph{counts every call} to the objective and stops when a per-graph budget of evaluations is exhausted, so the running-best approximation ratio as a function of the number of evaluations---the \emph{query-budget frontier}---is a faithful, hardware-relevant comparison. We compare five policies: \emph{random} (uniform angles), \emph{spectral} ($\gamma_0$ from Laplacian algebraic connectivity, $\beta_0=\pi/8$), \emph{topology} (a non-learned fixed-angle heuristic scaled by mean degree), \emph{graph-conditioned} (the learned policy: a $k$-nearest-neighbour regressor over standardized relabeling-invariant descriptors, fit on training graphs only), and \emph{rl} (a cross-entropy-method refiner seeded by the graph-conditioned proposal). To test transfer honestly, for each held-out family we fit the learned policy only on graphs from the other five families and evaluate on the held-out one; a fingerprint-based leakage check confirms no test graph appears in training.
 
 \subsection{Reported scale and reproducibility}
 All numbers below come from the reported-scale configuration \texttt{configs/full.yaml}: six families---Erd\H{o}s--R\'enyi~\cite{erdos1959random}, random regular, Barab\'asi--Albert (scale-free)~\cite{barabasi1999emergence}, Watts--Strogatz (small-world)~\cite{watts1998collective}, two-dimensional grid, and stochastic block~\cite{holland1983stochastic}---with $\sync{20}$ graphs per family ($\sync{120}$ graphs total), sizes $n\in\{10,12,14,16\}$, depth-1, query budget $\sync{40}$, and master seed $0$. The leakage check confirmed the run is clean (\texttt{leakage\_clean}: true). The whole pipeline runs in \SI{84.5}{\second} with a peak memory of \SI{163.3}{\mega\byte} on a single laptop CPU. Means are reported with $95\%$ confidence intervals ($1.96\,s/\sqrt{n}$) over the $\sync{120}$ test evaluations. Every value is written directly to \texttt{results/summary.json} by the runner and propagated to the tables and figures by the plotting scripts; none are entered by hand. All experiments are reproducible on commodity hardware; runtime and memory are reported for each benchmark.
@@ -63,17 +71,7 @@ Table~\ref{tab:main} reports the held-out approximation ratio (mean over the $n=
 \centering
 \caption{\textbf{Held-out QAOA warm-start benchmark at full scale.} Mean depth-one approximation ratio over $n=\sync{120}$ family-held-out test evaluations, $95\%$ confidence interval, mean queries to reach the $0.95$ target (capped at the budget of $40$), and target hit rate. The learned graph-conditioned policy matches the spectral and topology baselines to within statistical resolution; all three clearly exceed random initialization. Values are transcribed verbatim from \texttt{results/summary.json} / \texttt{results/main\_results.tex}.}
 \label{tab:main}
-\begin{tabular}{lcccc}
-\toprule
-policy & approx.\ ratio & $\pm$95\% & queries$\to$target & hit rate \\
-\midrule
-random & 0.7327 & 0.0162 & 40.00 & 0.00 \\
-spectral & 0.7846 & 0.0093 & 40.00 & 0.00 \\
-topology & 0.7846 & 0.0093 & 40.00 & 0.00 \\
-graph conditioned & 0.7846 & 0.0093 & 40.00 & 0.00 \\
-rl & 0.7808 & 0.0092 & 40.00 & 0.00 \\
-\bottomrule
-\end{tabular}
+\input{tables/main_results.tex}
 \end{table}
 
 \subsection{Query-budget frontier}
@@ -82,7 +80,7 @@ Figure~\ref{fig:frontier} plots the mean running-best approximation ratio as a f
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.82\linewidth]{fig_frontier.pdf}
-\caption{\textbf{Budgeted QAOA warm-start frontier.} Mean running-best approximation ratio (averaged over all $\sync{120}$ held-out test graphs) versus query budget, one curve per warm-start policy. Structure-aware policies (spectral, topology, graph-conditioned) begin far above random and converge onto a common ratio near $\sync{0.7846}$ as the refiner spends its budget; random initialization trails throughout, ending at $\sync{0.7327}$. The learned graph-conditioned policy's early-budget edge is erased by the local refiner, so its final ratio coincides with the spectral baseline. Data: the \texttt{frontier} block of \texttt{results/summary.json}.}
+\caption{\textbf{Budgeted QAOA warm-start frontier.} Mean running-best approximation ratio (averaged over all $\sync{120}$ held-out test graphs) versus query budget, one curve per warm-start policy. Structure-aware policies (spectral, topology, graph-conditioned) begin far above random and converge onto a common ratio near $\sync{0.7846}$ as the refiner spends its budget; random initialization trails throughout, ending at $\sync{0.7327}$. The learned graph-conditioned policy's early-budget edge is erased by the local refiner, so its final ratio coincides with the spectral baseline. Lines are means over the $n=\sync{120}$ held-out test graphs and shaded bands are 95\% confidence intervals of the mean ($1.96\,s/\sqrt{n}$); the structure-aware bands overlap throughout while random sits clearly below. Data: the \texttt{frontier} block of \texttt{results/summary.json}.}
 \label{fig:frontier}
 \end{figure}
 
@@ -95,7 +93,7 @@ Figure~\ref{fig:family} breaks the held-out approximation ratio down by graph fa
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.92\linewidth]{fig_family.pdf}
-\caption{\textbf{Held-out approximation ratio by graph family.} Grouped bars show the mean held-out ratio for each policy within each of the six families ($n=\sync{20}$ per family); for each family the graph-conditioned policy is fit only on the other five families. The three structure-aware policies are nearly superimposed in every family; cross-family differences (easiest on stochastic-block and Erd\H{o}s--R\'enyi, hardest on grids) dominate over policy differences, and all structure-aware policies improve on random everywhere, most where random is weakest (grid, Watts--Strogatz). Data: the \texttt{by\_family} block of \texttt{results/summary.json}.}
+\caption{\textbf{Held-out approximation ratio by graph family.} Grouped bars show the mean held-out ratio for each policy within each of the six families ($n=\sync{20}$ per family); for each family the graph-conditioned policy is fit only on the other five families. The three structure-aware policies are nearly superimposed in every family; cross-family differences (easiest on stochastic-block and Erd\H{o}s--R\'enyi, hardest on grids) dominate over policy differences, and all structure-aware policies improve on random everywhere, most where random is weakest (grid, Watts--Strogatz). Bars are means and error bars are 95\% confidence intervals of the mean ($1.96\,s/\sqrt{n}$) over the $n=\sync{20}$ held-out graphs in each family. Data: the \texttt{by\_family} block of \texttt{results/summary.json}.}
 \label{fig:family}
 \end{figure}
 

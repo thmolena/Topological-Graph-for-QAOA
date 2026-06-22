@@ -51,7 +51,12 @@ def _eval_policy(name, graph, gcp, budget, rng) -> BudgetEnv:
 
 
 def _frontier_curve(histories: List[List[tuple]], budget: int) -> List[list]:
-    """Average running-best ratio across graphs onto a 1..budget grid."""
+    """Average running-best ratio across graphs onto a 1..budget grid.
+
+    Each grid point is returned as ``[q, mean, ci95]`` where ``ci95`` is the
+    95% confidence interval of the mean (1.96 * s / sqrt(n)) across graphs, so
+    line plots can carry an explicit uncertainty band (Nature requirement).
+    """
     grid = np.arange(1, budget + 1)
     stacked = []
     for hist in histories:
@@ -64,8 +69,14 @@ def _frontier_curve(histories: List[List[tuple]], budget: int) -> List[list]:
         stacked.append(curve)
     if not stacked:
         return []
-    mean = np.mean(stacked, axis=0)
-    return [[int(q), round(float(v), 6)] for q, v in zip(grid, mean)]
+    arr = np.vstack(stacked)
+    n = arr.shape[0]
+    mean = arr.mean(axis=0)
+    ci95 = 1.96 * arr.std(axis=0, ddof=1) / np.sqrt(n) if n > 1 else np.zeros_like(mean)
+    return [
+        [int(q), round(float(m), 6), round(float(c), 6)]
+        for q, m, c in zip(grid, mean, ci95)
+    ]
 
 
 def run(cfg: Config, out_dir: Path) -> Dict:

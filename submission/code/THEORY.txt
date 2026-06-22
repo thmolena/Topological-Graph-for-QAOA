@@ -1,0 +1,191 @@
+================================================================================
+THEORY.txt  --  Topology-conditioned warm starts for depth-one QAOA
+A from-scratch derivation of every concept the code in this folder implements.
+================================================================================
+
+This document is meant to be read top-to-bottom by someone who has seen linear
+algebra and basic probability but NOT quantum computing, QAOA, graph kernels, or
+the specific estimators used here. Every symbol used in the code is defined.
+Each section maps to a source file so you can read theory and implementation side
+by side.
+
+--------------------------------------------------------------------------------
+0. THE PROBLEM IN ONE PARAGRAPH
+--------------------------------------------------------------------------------
+MaxCut: given an undirected graph G = (V, E), split the vertices into two sets so
+that the number of edges crossing the split is as large as possible. This is
+NP-hard (Karp 1972). QAOA is a quantum heuristic that prepares a parameterized
+quantum state and tunes a few angles to make the *expected* number of cut edges
+large. Running QAOA on hardware is expensive because every evaluation of the
+objective costs many circuit executions. A "warm start" supplies good initial
+angles so fewer evaluations are needed. The scientific question of this paper:
+does a *learned, topology-aware* warm start beat a simple *spectral* rule when
+both are measured under the same query budget? (Answer: it matches, not beats.)
+
+--------------------------------------------------------------------------------
+1. GRAPHS AND THE CUT FUNCTION            [src/topoqaoa/graph_generators.py]
+--------------------------------------------------------------------------------
+A graph G = (V, E) has n = |V| vertices and edge set E. A cut is an assignment
+z : V -> {+1, -1}. Edge (u,v) is "cut" iff z_u != z_v, i.e. (1 - z_u z_v)/2 = 1.
+So the cut size is
+        C(z) = sum_{(u,v) in E} (1 - z_u z_v) / 2.
+MaxCut value C* = max_z C(z). Flipping all spins gives the same cut, so we fix
+vertex 0 to +1 and enumerate the remaining 2^(n-1) assignments; this is the
+brute-force oracle (exact for n <= ~20). See maxcut_exact.py.
+
+We test on six graph families because "is the warm start general?" only means
+something across structurally different graphs:
+  Erdos-Renyi G(n,p)      -- each edge present independently w.p. p (no structure)
+  random d-regular        -- every vertex has the same degree d (degree-homogeneous)
+  Barabasi-Albert         -- preferential attachment -> heavy-tailed degrees (scale-free)
+  Watts-Strogatz          -- ring + random rewiring (small-world, high clustering)
+  2-D grid                -- lattice (local, hard for depth-1)
+  stochastic block model  -- two communities, dense within / sparse between
+
+--------------------------------------------------------------------------------
+2. QUBITS AND THE QAOA STATE (the minimum quantum mechanics you need)
+                                                       [src/topoqaoa/qaoa.py]
+--------------------------------------------------------------------------------
+A single qubit's state is a unit vector in C^2. n qubits live in the tensor
+product C^(2^n); a basis state |z> corresponds exactly to a spin assignment
+z in {+1,-1}^n (bit b <-> spin 1-2b). Operators are 2^n x 2^n matrices.
+
+Pauli-Z on qubit v, written Z_v, is diagonal: Z_v|z> = z_v |z>. Pauli-X on qubit
+v flips that qubit. Define:
+  Cost operator   C = sum_{(u,v) in E} (1 - Z_u Z_v)/2.   (diagonal; C|z> = C(z)|z>)
+  Mixer           B = sum_v X_v.
+
+QAOA at depth p starts from the uniform superposition |+>^{⊗n} (equal amplitude
+on all 2^n assignments) and alternates two unitary "rotations":
+  |gamma,beta> = prod_{l=1..p} exp(-i beta_l B) exp(-i gamma_l C) |+>^{⊗n}.
+- exp(-i gamma C) is diagonal: it multiplies each |z> by a phase e^{-i gamma C(z)}.
+- exp(-i beta B) factorizes over qubits because B is a sum of single-qubit X's;
+  each factor is a 2x2 rotation. So we never build the 2^n x 2^n matrix B: we
+  apply n cheap single-qubit operations. (This is the "matrix-free" trick.)
+The objective is the expectation <C> = <gamma,beta| C |gamma,beta>. Maximizing
+<C> over the angles is the QAOA optimization. This file implements the exact
+statevector evaluator at cost O(p n 2^n) -- the unambiguous reference oracle.
+
+--------------------------------------------------------------------------------
+3. THE DEPTH-ONE CLOSED FORM (why we can be fast AND exact)   [qaoa.py]
+--------------------------------------------------------------------------------
+At p = 1 the expected cut decomposes edge-by-edge and has a known analytic form
+(Wang, Hadfield, Jiang & Rieffel 2018). For edge (u,v), with d_u, d_v the number
+of neighbours of u, v *other than the partner*, and f the number of common
+neighbours,
+  <C_uv> = 1/2
+         + (1/4) sin(4 beta) sin(gamma) [cos^{d_u}(gamma) + cos^{d_v}(gamma)]
+         - (1/4) sin^2(2 beta) cos^{d_u+d_v-2f}(gamma) [1 - cos^f(2 gamma)],
+and <C> = sum_{(u,v) in E} <C_uv>. This costs O(|E|) instead of O(2^n).
+KEY POINT (cross-verification): the code computes <C> BOTH ways -- statevector
+and closed form -- and the test suite asserts they agree to 1e-9. That is what
+licenses us to use the fast formula everywhere. If a future edit breaks either
+path, the test fails. (tests/test_qaoa_closed_form.py)
+
+--------------------------------------------------------------------------------
+4. RELABELING-INVARIANT GRAPH DESCRIPTORS      [src/topoqaoa/descriptors.py]
+--------------------------------------------------------------------------------
+A learned policy needs to turn a graph into a fixed-length vector phi(G). The
+non-negotiable property: isomorphic graphs (same graph, vertices renamed) must
+get the SAME vector, otherwise the model could "cheat" on vertex labels. We build
+phi(G) only from quantities provably invariant to a permutation pi of vertices:
+  - degree statistics (mean/std/max/min, density): degrees are a multiset, invariant.
+  - motif densities (triangles, clustering, 4-cycles via traces of A^k): traces of
+    powers of the adjacency matrix are invariant because A(piG) = P A P^T and
+    tr(P A^k P^T) = tr(A^k).
+  - hashed Weisfeiler-Lehman histogram (see Section 5).
+  - Laplacian-spectral moments: the Laplacian L = D - A transforms as P L P^T, so
+    its eigenvalues (hence algebraic connectivity, spectral gap, spectral moments)
+    are invariant.
+  - connectivity features (assortativity, global clustering): incidence-defined.
+Concatenating invariant blocks yields an invariant vector (Theorem in the paper).
+The test suite verifies this numerically: phi(piG) == phi(G) to 1e-8 over random
+permutations. (tests/test_descriptor_invariance.py)
+
+--------------------------------------------------------------------------------
+5. WEISFEILER-LEHMAN COLOR REFINEMENT (theory-of-computation flavour)
+--------------------------------------------------------------------------------
+WL is a classic graph-isomorphism heuristic. Start by colouring each vertex by its
+degree. Repeat: each vertex's new colour = hash(its old colour, sorted multiset of
+neighbours' colours). After a few rounds, the *histogram* of colours is a
+fingerprint of local structure that ignores vertex names (a relabeling permutes
+which vertex holds a colour but not the multiset of colours). WL is exactly as
+powerful at telling graphs apart as a basic message-passing graph neural network
+(Xu et al. 2019) -- which is why a WL histogram is a principled, dependency-light
+stand-in for a GNN here. We hash colours into a fixed number of bins so phi has
+fixed length.
+
+--------------------------------------------------------------------------------
+6. WARM-START POLICIES                          [src/topoqaoa/baselines.py]
+--------------------------------------------------------------------------------
+A policy maps a graph to initial angles (gamma_0, beta_0):
+  random            : gamma_0 ~ U(0,pi), beta_0 ~ U(0,pi/2).            (control)
+  spectral          : gamma_0 = clip(pi/(2(1+lambda_2)),0,pi) from the algebraic
+                      connectivity lambda_2 (2nd-smallest Laplacian eigenvalue),
+                      beta_0 = pi/8.                                    (the rival)
+  topology          : gamma_0 = arctan(1/sqrt(mean degree)), beta_0 = pi/8.
+  graph_conditioned : the LEARNED policy. k-nearest-neighbour regression (k=3)
+                      over standardized descriptors phi(G). Training graphs each
+                      contribute (phi(G), best angles found by a 24x12 grid
+                      search). At test time, average the angles of the 3 nearest
+                      training descriptors. This is a deterministic surrogate for
+                      a trained GNN; a GNN backend can be dropped in unchanged.
+  rl                : cross-entropy method (population 8, elite 3, 4 iters) over a
+                      Gaussian in (gamma,beta), seeded by graph_conditioned.
+
+WHY kNN IS "MACHINE LEARNING": it is the simplest non-parametric estimator -- it
+generalizes by assuming nearby inputs (in descriptor space) have nearby optimal
+angles. Standardization (subtract mean, divide by std per feature) makes the
+Euclidean distance meaningful across heterogeneous features. The whole pipeline
+is deterministic given the seed, which is what makes the results reproducible.
+
+--------------------------------------------------------------------------------
+7. THE QUERY-COUNTED REFINER                    [src/topoqaoa/env.py]
+--------------------------------------------------------------------------------
+This is the heart of the "honest benchmark." Hardware cost ~ number of objective
+evaluations, so we COUNT THEM. The refiner does coordinate ascent from the warm
+start: step 0.3, probe +/- along each angle axis, accept improvements, halve the
+step when stuck, stop when the per-graph budget B is spent or step < 1e-3. Every
+call increments a counter and records (query_index, running_best_ratio). The
+"query-budget frontier" is the mean running-best ratio vs query index -- a
+faithful, hardware-relevant comparison that a single final number hides.
+
+--------------------------------------------------------------------------------
+8. SPLITS, LEAKAGE, AND METRICS         [splits.py, metrics.py, runner.py]
+--------------------------------------------------------------------------------
+Transfer is tested by FAMILY-HELD-OUT cross-validation: to evaluate family F, fit
+the learned policy ONLY on the other five families and test on F. A fingerprint
+(family, n, |E|, hashed degree sequence) checks that no test graph appears in
+training (records leakage_clean = true). Metrics: approximation ratio <C>/C* (in
+[0,1]); queries-to-target (first query reaching ratio 0.95, else the budget);
+target hit rate. Aggregates report mean, sample std s, and a 95% confidence
+interval 1.96 s / sqrt(n). runner.py ties it all together and writes
+results/summary.json -- the SINGLE SOURCE OF TRUTH from which every table and
+figure (and every number in the paper) is generated. Nothing is typed by hand.
+
+--------------------------------------------------------------------------------
+9. HOW TO REPRODUCE EVERYTHING
+--------------------------------------------------------------------------------
+  pip install -r requirements.txt && pip install -e .
+  make test          # tests incl. closed-form<->statevector (1e-9), invariance (1e-8)
+  bash scripts/reproduce_all.sh full   # writes results/summary.json, tables, figures
+The reported run: 120 graphs, 6 families, depth 1, budget 40, seed 0; the learned
+and spectral policies both reach 0.7846 +/- 0.0093, random 0.7327. Figures are
+produced by src/topoqaoa/plotting.py in Nature Machine Intelligence house style
+(vector PDF, sans-serif, colour-blind-safe palette, panel labels, error bars).
+results/summary.json -> make_tables.py -> results/main_results.tex, and
+results/summary.json -> make_figures.py -> figures/{fig_schematic,fig_frontier,
+fig_family}.pdf. These figure/table artifacts are copied verbatim into the
+submission/ folder used to build the manuscript.
+
+--------------------------------------------------------------------------------
+10. WHAT THE RESULT MEANS (and what it does NOT)
+--------------------------------------------------------------------------------
+The learned topology policy and the one-line spectral rule reach the same depth-1
+approximation ratio because both encode the same signal: the Laplacian spectrum.
+Once even a small refinement budget is allowed, any head start is equalized. We
+therefore report a TIE, not a win. The value delivered is the reusable, honest,
+cross-verified, leakage-controlled benchmark and a clear query-efficiency finding
+(structure-aware policies are near-final on the first query). No quantum-hardware
+or superiority claim is made; depth is one, sizes are n <= 16, graphs are synthetic.
+================================================================================
