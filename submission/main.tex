@@ -21,6 +21,8 @@
 \newcommand{\ket}[1]{\left\lvert #1 \right\rangle}
 \newcommand{\expval}[1]{\left\langle #1 \right\rangle}
 \newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
 
 \title{\bfseries\LARGE Topology-conditioned warm starts match spectral initialization for depth-one QAOA: an honest, query-counted MaxCut benchmark with relabeling-invariant graph descriptors}
 \author[ ]{Molena Huynh}
@@ -99,6 +101,29 @@ Figure~\ref{fig:family} breaks the held-out approximation ratio down by graph fa
 
 \subsection{Cross-verification and invariance}
 Two internal correctness checks underpin the benchmark. The depth-one objective is computed by the analytic per-edge closed form~\cite{wang2018quantum} and independently by an exact statevector simulator; across all six families and a panel of angle settings these two evaluators agree to better than $10^{-9}$, so the fast closed form used throughout is provably the same objective as the unambiguous simulator. Separately, the topology descriptor is verified to be invariant to node relabeling: under repeated random permutations the descriptor vector is unchanged to $10^{-8}$. These guarantees ensure that the reported ratios are exact and that the learned policy genuinely sees only order-invariant graph information.
+
+\subsection{Theory: invariance of the learned policy input}
+\begin{theorem}[Relabeling invariance of the descriptor map]
+\label{thm:qaoa-invariance}
+Let $\phi(G)$ be the descriptor used by the graph-conditioned warm-start policy:
+degree and motif statistics, hashed Weisfeiler--Lehman colour histograms, cycle
+features, Laplacian-spectral moments and connectivity statistics. For any graph
+isomorphism $\pi$ acting as a node relabeling, $\phi(\pi G)=\phi(G)$. Therefore
+the learned regressor receives identical inputs for isomorphic graphs and cannot
+exploit node-order leakage.
+\end{theorem}
+
+\begin{proof}
+Degree statistics, motif counts, cycle counts and connectivity statistics are
+defined by graph incidence relations and are unchanged by relabeling. The
+Laplacian of $\pi G$ is $\Pi L_G\Pi^\top$ for a permutation matrix $\Pi$, so its
+eigenvalues and all spectral moments are unchanged. Weisfeiler--Lehman
+refinement updates each node colour from the multiset of neighbouring colours;
+a relabeling permutes the nodes but preserves every such multiset, and the final
+histogram forgets node identities. Hashing is applied only to colour labels and
+then aggregated as a histogram, so the binned counts are likewise invariant.
+Each block is invariant; concatenating the blocks gives $\phi(\pi G)=\phi(G)$.
+\end{proof}
 
 \section{Discussion}
 Our headline result is a tie, and we report it as such: at full scale a learned, topology-conditioned warm-start policy reaches the same depth-one approximation ratio as a one-line spectral initializer ($\sync{0.7846}$ for both, $95\%$ CI $\pm\sync{0.0093}$), with the non-learned topology heuristic also at $\sync{0.7846}$, while all three improve clearly on random initialization ($\sync{0.7327}$). The learned policy does \emph{not} beat the spectral baseline. We did not tune the benchmark to manufacture an advantage, and we resist the temptation to do so.
