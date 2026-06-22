@@ -7,8 +7,8 @@ GNN backend can be dropped in). No heavyweight quantum dependency.
 
 ## Install
 ```bash
-conda env create -f environment.yml && conda activate topoqaoa   # or:
-pip install -r requirements.txt && pip install -e .
+conda env create -f environment.yml && conda activate topoqaoa
+export PYTHONPATH=src
 ```
 
 ## Reproduce
@@ -51,4 +51,4 @@ tests/     exact-MaxCut · closed-form↔statevector · descriptor invariance ·
 per-family breakdown. It is the single source of truth for every table, figure and macro.
 
 All experiments are reproducible on commodity hardware; runtime and memory are reported for each benchmark.
-A from-basics explanation of the graph, QAOA, and learning objects is in `THEORY.txt`.
+A from-basics explanation of the graph, QAOA, and learning objects is in `src/topoqaoa/foundations.py`.

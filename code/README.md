@@ -7,8 +7,8 @@ GNN backend can be dropped in). No heavyweight quantum dependency.
 
 ## Install
 ```bash
-conda env create -f environment.yml && conda activate topoqaoa   # or:
-pip install -r requirements.txt && pip install -e .
+conda env create -f environment.yml && conda activate topoqaoa
+export PYTHONPATH=src
 ```
 
 ## Reproduce

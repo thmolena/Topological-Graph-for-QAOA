@@ -17,6 +17,7 @@ Feature blocks:
 from __future__ import annotations
 
 import hashlib
+import warnings
 from collections import Counter
 from typing import Dict, List
 
@@ -109,7 +110,13 @@ def _laplacian_block(g: nx.Graph) -> List[float]:
 
 def _connectivity_block(g: nx.Graph) -> List[float]:
     try:
-        assort = nx.degree_assortativity_coefficient(g)
+        # Degree-homogeneous graphs (e.g. regular, grid) give 0/0 inside
+        # networkx's correlation formula, raising a harmless RuntimeWarning and
+        # returning NaN; we map NaN to 0.0, so suppressing the warning here does
+        # not change any descriptor value.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=RuntimeWarning)
+            assort = nx.degree_assortativity_coefficient(g)
         assort = 0.0 if np.isnan(assort) else float(assort)
     except Exception:
         assort = 0.0
