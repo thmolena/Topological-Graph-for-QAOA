@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "topoqaoa"
 version = "0.1.0"
 description = "Topology-Guided Graph RL for QAOA Warm Starts"
-readme = "README.md"
+readme = { text = "Topology-Guided Graph RL for QAOA Warm Starts", content-type = "text/plain" }
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "Molena Huynh" }]
