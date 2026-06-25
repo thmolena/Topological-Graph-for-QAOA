@@ -12,7 +12,7 @@
 <style>
   :root{
     --bg:#fbfcfe; --panel:#ffffff; --ink:#10151c; --muted:#5b6675; --line:#e6eaf0;
-    --accent:#76b900; --accent2:#1f6feb; --accent-d:#5a8f00; --code:#0d1117;
+    --accent:#76b900; --accent2:#1f6feb; --accent-d:#5a8f00; --code:#eef2f7;
     --shadow:0 1px 2px rgba(16,21,28,.06),0 8px 24px rgba(16,21,28,.06);
   }
   *{box-sizing:border-box}
@@ -76,8 +76,8 @@
   tbody tr:last-child td{border-bottom:none}
   .best{color:var(--accent-d);font-weight:700}
   .note{font-size:13px;color:var(--muted);margin-top:8px;max-width:80ch}
-  pre{background:var(--code);color:#e6edf3;border-radius:12px;padding:16px 18px;overflow-x:auto;font-size:13px;line-height:1.55;box-shadow:var(--shadow)}
-  pre .cm{color:#8b949e}
+  pre{background:var(--code);color:#1b2330;border:1px solid var(--line);border-radius:12px;padding:16px 18px;overflow-x:auto;font-size:13px;line-height:1.55;box-shadow:var(--shadow)}
+  pre .cm{color:#6e7781}
   .demo{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
   .demo .controls{display:grid;grid-template-columns:1fr 1fr;gap:14px 26px;margin-bottom:14px}
   @media(max-width:680px){.demo .controls{grid-template-columns:1fr}}
@@ -117,10 +117,11 @@
 </div></nav>
 
 <header class="hero">
-  <span class="tag">Variational quantum optimization · NISQ benchmarking</span>
+  <span class="tag">Variational quantum optimization · Reproducible NISQ benchmarking · Provable relabeling-invariance</span>
   <h1>Topology-conditioned warm starts match spectral initialization for depth-one QAOA</h1>
-  <p class="sub">An honest, query-counted MaxCut benchmark with relabeling-invariant graph descriptors. A learned, topology-aware policy is shown to <em>equal</em> — not exceed — a one-line spectral initializer, reported transparently with 95% confidence intervals over 120 graphs across six families.</p>
-  <p class="auth">Molena Huynh <span>· depth-one QAOA · exact-MaxCut ground truth · cross-verified objective</span></p>
+  <p class="sub">A query-counted MaxCut benchmark, built on provably relabeling-invariant graph descriptors and two cross-verified objective evaluators, subjects a learned topology-aware warm-start policy to a leakage-controlled, matched-budget comparison against a one-line spectral rule. The learned policy <em>equals</em> rather than exceeds that baseline, a finding reported in full with 95% confidence intervals over 120 graphs across six families.</p>
+  <p class="auth">Molena Huynh <span>· North Carolina State University · <a href="mailto:molena.huynh@jmp.com">molena.huynh@jmp.com</a></span></p>
+  <p class="auth" style="margin-top:6px;font-weight:400"><span>Depth-one QAOA · exact-MaxCut ground truth · cross-verified objective · part of a unified graph-learning program for quantum computation</span></p>
   <div class="chips">
     <div class="chip"><b>0.7846 ± 0.0093</b><span>held-out approx. ratio (learned ≡ spectral)</span></div>
     <div class="chip"><b>+0.052</b><span>absolute gain over random (≈7% rel.)</span></div>
@@ -139,16 +140,16 @@
 <!-- BACKGROUND -->
 <section id="background">
   <h2>Background and Motivation</h2>
-  <p class="lead">On near-term hardware, the dominant cost of the quantum approximate optimization algorithm is not the depth of the circuit but the number of objective evaluations consumed while searching for good variational angles.</p>
-  <p>The quantum approximate optimization algorithm (QAOA) is a leading candidate for near-term quantum advantage on combinatorial problems and a workhorse benchmark for variational algorithms in the noisy intermediate-scale quantum (NISQ) era. For the canonical MaxCut problem — NP-hard, with the celebrated Goemans–Williamson classical guarantee — a depth-$p$ circuit alternates a cost-Hamiltonian phase and a transverse-field mixer parameterized by $2p$ angles $(\bm{\gamma},\bm{\beta})$, and maximizes the expected cut $\langle C(\bm{\gamma},\bm{\beta})\rangle$. On real devices each evaluation of $\langle C\rangle$ costs many circuit executions and shots, and the variational optimizer must call the objective repeatedly. Angle optimization is therefore a primary bottleneck, aggravated by barren plateaus and cost concentration in high-dimensional landscapes. The practically relevant quantity is not only the best achievable cut, but the cut a policy can reach within a <em>fixed query budget</em>.</p>
-  <p>A natural remedy is a <em>warm start</em>: supply good initial angles so the optimizer begins inside a high-quality basin. Several observations motivate this — the QAOA objective concentrates across instances of a given structure, optimal parameters transfer between random graphs and across sizes, and dedicated initialization schemes (annealing schedules, relaxation rounding, classical surrogates, meta-learning) can place the optimizer well. At depth one in particular, the expected cut admits an exact closed form, so the dependence of good angles on local graph structure can be probed analytically and at negligible cost.</p>
-  <p><b>The open problem.</b> This invites a learning question: can a policy that conditions on graph topology — ideally a permutation-invariant representation in the spirit of graph neural networks and Weisfeiler–Lehman kernels — propose warm-start angles that transfer to <em>unseen</em> graph families and outperform a simpler initializer? The literature is rich in proposals but comparatively sparse in controlled, leakage-aware, query-counted head-to-head evaluations against a strong-but-simple spectral baseline. Absent such controls it is easy to over-credit a learned component for gains that a one-line spectral rule already delivers.</p>
+  <p class="lead">On near-term hardware, the binding cost of the quantum approximate optimization algorithm is the number of objective evaluations spent locating good variational angles, not circuit depth.</p>
+  <p>The quantum approximate optimization algorithm (QAOA) is a leading candidate for near-term quantum advantage on combinatorial problems and a standard testbed for variational algorithms in the noisy intermediate-scale quantum (NISQ) era. On the canonical MaxCut problem — NP-hard, with the Goemans–Williamson classical guarantee — a depth-$p$ circuit alternates a cost-Hamiltonian phase with a transverse-field mixer under $2p$ angles $(\bm{\gamma},\bm{\beta})$ and maximizes the expected cut $\langle C(\bm{\gamma},\bm{\beta})\rangle$. Each evaluation of $\langle C\rangle$ on hardware consumes many circuit executions and shots, and the variational optimizer queries the objective repeatedly; angle optimization is therefore the rate-limiting step, compounded by barren plateaus and cost concentration in high-dimensional landscapes. The operative figure of merit is consequently the cut a policy reaches within a <em>fixed query budget</em>, alongside the best attainable cut.</p>
+  <p>A <em>warm start</em> targets precisely this cost: supplying good initial angles places the optimizer inside a high-quality basin from the outset. Three empirical regularities lend warm starts their force — the QAOA objective concentrates across instances that share structure, optimal parameters transfer between random graphs and across sizes, and purpose-built initializers (annealing schedules, relaxation rounding, classical surrogates, meta-learning) reliably seed the optimizer well. Depth one is the cleanest setting in which to study them: the expected cut admits an exact closed form, so the dependence of good angles on local graph structure is open to analytic inspection at negligible cost.</p>
+  <p><b>The open problem.</b> A sharp learning question follows. A policy that conditions on graph topology — ideally through a permutation-invariant representation, in the spirit of graph neural networks and Weisfeiler–Lehman kernels — should propose warm-start angles that transfer to <em>unseen</em> graph families and improve on a simpler initializer. The literature offers many such proposals but few controlled tests; leakage-aware, query-counted, family-held-out comparisons against a strong-but-simple spectral baseline remain scarce. Absent those controls, a learned component is readily credited for gains that a one-line spectral rule already supplies.</p>
 </section>
 
 <!-- PRELIMINARIES -->
 <section id="prelim">
   <h2>Mathematical Preliminaries</h2>
-  <p class="lead">The formal objects a reader must command: the MaxCut cost operator and mixer, the depth-one state, the per-edge closed-form estimator, and the relabeling-invariant descriptor generator.</p>
+  <p class="lead">Four objects underpin every claim that follows: the MaxCut cost operator and mixer, the depth-one state, the per-edge closed-form estimator, and the relabeling-invariant descriptor generator.</p>
 
   <div class="grid2">
     <div class="card">
@@ -165,20 +166,20 @@
   </div>
 
   <h3>Depth-one per-edge estimator</h3>
-  <p>For an edge $(u,v)\in E$, let $d_u,d_v$ be the numbers of neighbours of $u$ and $v$ other than the partner, and $f$ the number of common neighbours. The expected per-edge contribution has the closed form (Wang et al.):</p>
+  <p>Fix an edge $(u,v)\in E$, and let $d_u,d_v$ count the neighbours of $u$ and $v$ other than the partner, with $f$ the number of common neighbours. The expected contribution of this edge to the cut has the closed form (Wang et al.):</p>
   <p style="text-align:center">$$\langle C_{uv}\rangle=\tfrac12+\tfrac14\sin(4\beta)\sin\gamma\,\bigl[\cos^{d_u}\!\gamma+\cos^{d_v}\!\gamma\bigr]-\tfrac14\sin^2(2\beta)\,\cos^{\,d_u+d_v-2f}\!\gamma\,\bigl[1-\cos^{f}(2\gamma)\bigr],$$</p>
-  <p>and the total expected cut is $\langle C\rangle=\sum_{(u,v)\in E}\langle C_{uv}\rangle$ by linearity. This $O(|E|)$ analytic estimator is the same quantity as the exact $O(p\,n\,2^n)$ statevector expectation (cross-verified to $10^{-9}$), and the quality of a cut is the approximation ratio $\langle C\rangle/C^\star$ against the true MaxCut $C^\star$ obtained by exact enumeration of the $2^{n-1}$ distinct bipartitions.</p>
+  <p>By linearity the total expected cut is $\langle C\rangle=\sum_{(u,v)\in E}\langle C_{uv}\rangle$. This $O(|E|)$ analytic estimator computes precisely the same quantity as the exact $O(p\,n\,2^n)$ statevector expectation — they agree to $10^{-9}$ — so cut quality is reported as the approximation ratio $\langle C\rangle/C^\star$ relative to the true MaxCut $C^\star$, obtained by exact enumeration of the $2^{n-1}$ distinct bipartitions.</p>
 
   <h3>Relabeling-invariant descriptor generator</h3>
-  <p>The graph-conditioned policy reads a fixed-length descriptor $\phi(G)\in\mathbb{R}^m$ formed by concatenating six blocks of graph invariants: <em>degree</em> statistics (mean, std, max, min, density); <em>motif</em> densities (triangle density, average clustering, a 4-cycle density from $\operatorname{tr}(A^4)$); a hashed two-round, eight-bin <em>Weisfeiler–Lehman</em> colour histogram; <em>cycle</em> features (fraction of nodes in a triangle, inverse-girth proxy); <em>Laplacian</em> features ($\lambda_2$, spectral gap, mean and variance of the normalized-Laplacian spectrum); and <em>connectivity</em> features (degree assortativity, global clustering). Every component is a multiset, spectral, or trace quantity, so $\phi(\pi G)=\phi(G)$ for all $\pi\in S_n$ (proven below, verified to $10^{-8}$).</p>
+  <p>The graph-conditioned policy sees the graph only through a fixed-length descriptor $\phi(G)\in\mathbb{R}^m$, the concatenation of six blocks of graph invariants: <em>degree</em> statistics (mean, std, max, min, density); <em>motif</em> densities (triangle density, average clustering, a 4-cycle density from $\operatorname{tr}(A^4)$); a hashed two-round, eight-bin <em>Weisfeiler–Lehman</em> colour histogram; <em>cycle</em> features (fraction of nodes in a triangle, inverse-girth proxy); <em>Laplacian</em> features ($\lambda_2$, spectral gap, mean and variance of the normalized-Laplacian spectrum); and <em>connectivity</em> features (degree assortativity, global clustering). Each component is a multiset, spectral, or trace quantity and therefore order-blind, so $\phi(\pi G)=\phi(G)$ for all $\pi\in S_n$ (proven below, verified to $10^{-8}$).</p>
 </section>
 
 <!-- PROBLEM -->
 <section id="problem">
   <h2>Problem Formulation</h2>
-  <p class="lead">A precise, query-counted statement of the warm-start transfer question, evaluated under matched budgets with leakage control.</p>
-  <p>Fix depth $p=1$ and a per-graph query budget $B$. A warm-start policy maps a graph to initial angles $(\gamma_0,\beta_0)$ that seed a coordinate-ascent refiner; the refiner counts <em>every</em> call to the objective $\langle C\rangle$ and halts when the budget is exhausted. The running-best approximation ratio as a function of the number of evaluations — the <b>query-budget frontier</b> — is the hardware-relevant comparison.</p>
-  <p>Given a corpus of connected graphs partitioned into families, and a partition into family-held-out train/test folds with a programmatic no-leakage guarantee, the problem is to determine whether a learned, topology-conditioned policy attains a strictly higher held-out approximation ratio (at matched budget $B$) than a one-line spectral initializer, the non-learned topology heuristic, and uninformed random initialization. The five policies compared are:</p>
+  <p class="lead">The warm-start transfer question, stated precisely: which policy reaches the highest held-out approximation ratio under a matched query budget with leakage controlled.</p>
+  <p>Fix depth $p=1$ and a per-graph query budget $B$. A warm-start policy maps a graph to initial angles $(\gamma_0,\beta_0)$ that seed a coordinate-ascent refiner; the refiner counts <em>every</em> call to the objective $\langle C\rangle$ and halts once the budget is spent. The hardware-relevant figure of merit is the <b>query-budget frontier</b>: the running-best approximation ratio as a function of the number of evaluations.</p>
+  <p>The question is then crisp. Given a corpus of connected graphs grouped into families and split into family-held-out train/test folds under a programmatic no-leakage guarantee, the test is whether a learned, topology-conditioned policy reaches a <em>strictly higher</em> held-out approximation ratio at matched budget $B$ than a one-line spectral initializer, a non-learned topology heuristic, and uninformed random initialization. Five policies are placed head to head:</p>
   <ul class="tight">
     <li><b>Random</b> — $\gamma_0\sim\mathcal{U}(0,\pi)$, $\beta_0\sim\mathcal{U}(0,\pi/2)$.</li>
     <li><b>Spectral</b> — $\gamma_0=\operatorname{clip}\!\bigl(\pi/[2(1+\lambda_2)],0,\pi\bigr)$ from the algebraic connectivity, $\beta_0=\pi/8$.</li>
@@ -191,35 +192,35 @@
 <!-- CONTRIBUTIONS -->
 <section id="contrib">
   <h2>Principal Contributions</h2>
-  <p class="lead">The contribution is methodological — a verified framework and an honest, controlled finding — not a superiority claim.</p>
+  <p class="lead">The contribution is methodological: a verified evaluation framework and a controlled, fully reported finding, advanced in place of a claim of superiority.</p>
   <ol class="contrib">
-    <li><b>A relabeling-invariant descriptor framework.</b><span>A fixed-length graph descriptor built only from graph invariants (degree, motif, hashed Weisfeiler–Lehman, cycle, Laplacian-spectral, and connectivity blocks), with invariance to node relabeling proven and verified numerically to $10^{-8}$ under random permutations.</span></li>
-    <li><b>A cross-verified, query-counted warm-start benchmark.</b><span>Every policy proposes initial angles feeding a budgeted coordinate-ascent refiner; every objective query is counted against a fixed budget, and the depth-one objective is evaluated by an analytic per-edge formula cross-checked against an exact statevector simulator to $10^{-9}$. Approximation ratios are exact, against a brute-force MaxCut oracle.</span></li>
-    <li><b>Family-held-out transfer with leakage controls.</b><span>Policies are fit on a subset of graph families and evaluated on a held-out family, with a fingerprint-based programmatic check confirming that no test graph leaks into training (<code>leakage_clean: true</code>).</span></li>
-    <li><b>An honest, controlled finding plus a query-efficiency benefit.</b><span>Topology-conditioned warm starts <em>match</em> rather than exceed spectral initialization (both 0.7846 ± 0.0093), while every structure-aware policy reaches near-final quality on the very first objective evaluation — a conservatively stated efficiency benefit.</span></li>
+    <li><b>A provably relabeling-invariant graph descriptor.</b><span>A fixed-length representation assembled entirely from graph invariants — degree, motif, hashed Weisfeiler–Lehman, cycle, Laplacian-spectral, and connectivity blocks — with invariance to node relabeling proven and confirmed numerically to $10^{-8}$ under random permutations. Isomorphic graphs map to identical inputs, removing node-order leakage by construction.</span></li>
+    <li><b>A cross-verified, query-counted warm-start benchmark.</b><span>Each policy proposes initial angles into a budgeted coordinate-ascent refiner, with every objective query charged against a fixed budget. The depth-one objective is computed by an analytic per-edge formula certified against an exact statevector simulator to $10^{-9}$, and approximation ratios are exact, measured against a brute-force MaxCut oracle rather than a relaxation bound.</span></li>
+    <li><b>Family-held-out transfer under enforced leakage control.</b><span>Policies are fit on one subset of graph families and evaluated on a held-out family, with a fingerprint-based programmatic check confirming that every test graph is absent from training (<code>leakage_clean: true</code>), rendering the transfer claim well posed by construction.</span></li>
+    <li><b>A controlled null result, plus a query-efficiency edge.</b><span>The learned topology-conditioned warm start <em>matches</em> rather than exceeds spectral initialization (both 0.7846 ± 0.0093); separately, every structure-aware policy reaches near-final quality on its first objective evaluation — the conservatively stated benefit that survives the comparison.</span></li>
   </ol>
 </section>
 
 <!-- NOVELTY -->
 <section id="novelty">
   <h2>Methodological Novelty</h2>
-  <p class="lead">The novelty lies in the controls, not in a new model: a leakage-aware, query-counted, cross-verified head-to-head against a strong-but-simple spectral baseline, with provable invariance.</p>
+  <p class="lead">The novelty resides in the experimental controls rather than in a new model: a leakage-aware, query-counted, cross-verified head-to-head against a strong-but-simple spectral baseline, underwritten by provable invariance.</p>
   <div class="grid2">
     <div class="card">
       <h4>Relative to the warm-start / angle-transfer literature</h4>
-      <p>Brandão et al. (concentration), Galda et al. and Shaydulin et al. (parameter transfer), Sack–Serbyn (annealing schedules), Egger et al. (warm-start rounding), and meta-learning approaches (Verdon et al., Khairy et al.) propose initializers but rarely test them under matched query budgets with leakage-controlled, family-held-out transfer against a spectral rule. This benchmark supplies exactly that control and finds the learned gain over spectral is statistically null on final ratio.</p>
+      <p>Concentration (Brandão et al.), parameter transfer (Galda et al., Shaydulin et al.), annealing schedules (Sack–Serbyn), warm-start rounding (Egger et al.), and meta-learning (Verdon et al., Khairy et al.) each contribute initializers, yet seldom under matched query budgets with leakage-controlled, family-held-out transfer measured against a spectral rule. This benchmark imposes precisely those controls, and under them the learned gain over spectral is statistically null on the final ratio.</p>
     </div>
     <div class="card">
       <h4>Relative to graph learning for combinatorial optimization</h4>
-      <p>Work building on Weisfeiler–Lehman kernels and message-passing GNNs (Xu et al., Gilmer et al., Veličković et al.; Dai et al., Cappart et al.) motivates graph-conditioned policies. Here the descriptor is a <em>proven</em> relabeling-invariant, dependency-light surrogate for a message-passing GNN — with WL refinement shown to upper-bound message-passing expressivity — into which a trained GNN backend can be substituted without changing the harness.</p>
+      <p>Weisfeiler–Lehman kernels and message-passing GNNs (Xu et al., Gilmer et al., Veličković et al.; Dai et al., Cappart et al.) motivate graph-conditioned policies but do not, on their own, guarantee the invariance such a policy needs. Here the descriptor is a <em>proven</em> relabeling-invariant, dependency-light surrogate for a message-passing GNN — its WL refinement formally upper-bounds message-passing expressivity — and a trained GNN backend drops into the same slot without altering the harness.</p>
     </div>
     <div class="card">
       <h4>Relative to depth-one QAOA analysis</h4>
-      <p>The Wang et al. per-edge closed form is used not merely to evaluate angles cheaply, but as one of two independent evaluators: it is formally derived and then certified equal to the matrix-free statevector simulator (to $10^{-9}$), so the fast $O(|E|)$ objective is provably the exact circuit expectation rather than an approximation.</p>
+      <p>The Wang et al. per-edge closed form serves here not just as a cheap angle evaluator but as one of two independent evaluators: it is derived analytically and then certified equal to the matrix-free statevector simulator (to $10^{-9}$). The fast $O(|E|)$ objective is therefore the exact circuit expectation, not an approximation of it.</p>
     </div>
     <div class="card">
       <h4>Reporting discipline</h4>
-      <p>Every reported number is generated by the accompanying code from fixed seeds and written to a single <code>results/summary.json</code>; an audit script checks that tables and figures trace to artifacts and that no unsupported superiority phrasing appears. The null result is reported plainly, with the $0.95$-target miss and synthetic-graph scope left visible.</p>
+      <p>Every reported number is regenerated by the accompanying code from fixed seeds and written to a single <code>results/summary.json</code>, and an audit script confirms that tables and figures trace back to those artifacts and that no unsupported superiority phrasing appears. The null result stands as written, with the $0.95$-target miss and the synthetic-graph scope kept in view.</p>
     </div>
   </div>
 </section>
@@ -227,61 +228,61 @@
 <!-- THEORY -->
 <section id="theory">
   <h2>Theoretical Guarantees</h2>
-  <p class="lead">Each result is transcribed from the paper's Theory section and underwrites a specific experimental claim.</p>
+  <p class="lead">Each result is transcribed verbatim from the paper's Theory section, and each one licenses a specific experimental claim made elsewhere on this page.</p>
 
   <div class="thm">
     <span class="name">Lemma 1 · ℤ₂ reduction and oracle correctness</span>
     <p>$C(-z)=C(z)$ for all $z\in\{+1,-1\}^n$; fixing $z_0=+1$ and enumerating the $2^{n-1}$ remaining configurations visits every cut exactly once up to global flip, and the maximum equals the true MaxCut $C^\star$.</p>
-    <span class="interp">Certifies that every approximation ratio $\langle C\rangle/C^\star$ is measured against ground truth, not a relaxation bound.</span>
+    <span class="interp">Guarantees that every approximation ratio $\langle C\rangle/C^\star$ is measured against exact ground truth, not a relaxation bound.</span>
   </div>
 
   <div class="thm">
     <span class="name">Lemma 2 · Factorization of the mixer unitary</span>
     <p>$e^{-\mathrm{i}\beta B}=\bigotimes_{v=1}^{n}\bigl(\cos\beta\,\mathbb{I}-\mathrm{i}\sin\beta\,X\bigr)$, so the mixer acts by $n$ independent $2\times2$ operations and is never assembled as a $2^n\times2^n$ matrix.</p>
-    <span class="interp">Makes the reference statevector evaluator cost $O(p\,n\,2^n)$ rather than $O(2^{2n})$.</span>
+    <span class="interp">Reduces the reference statevector evaluator to $O(p\,n\,2^n)$ from $O(2^{2n})$.</span>
   </div>
 
   <div class="thm">
     <span class="name">Proposition 3 · Depth-one per-edge closed form</span>
     <p>$\langle C_{uv}\rangle=\tfrac12+\tfrac14\sin(4\beta)\sin\gamma\,[\cos^{d_u}\!\gamma+\cos^{d_v}\!\gamma]-\tfrac14\sin^2(2\beta)\cos^{\,d_u+d_v-2f}\!\gamma\,[1-\cos^{f}(2\gamma)]$, with $\langle C\rangle=\sum_{(u,v)\in E}\langle C_{uv}\rangle$.</p>
-    <span class="interp">The $O(|E|)$ objective used everywhere; a depth-one specialization of the light-cone argument.</span>
+    <span class="interp">Supplies the $O(|E|)$ objective used throughout — a depth-one specialization of the light-cone argument.</span>
   </div>
 
   <div class="thm">
     <span class="name">Corollary 4 · Closed-form / statevector equivalence</span>
     <p>For every $(\gamma,\beta)$ and every $G$, the per-edge closed form summed over $E$ equals the statevector expectation $\langle\gamma,\beta|C|\gamma,\beta\rangle$; the two are the same real-analytic function and any discrepancy is floating-point only (verified to $10^{-9}$).</p>
-    <span class="interp">Licenses using the fast closed form everywhere in place of the simulator.</span>
+    <span class="interp">Licenses substituting the fast closed form for the simulator everywhere, with no loss of exactness.</span>
   </div>
 
   <div class="thm">
     <span class="name">Theorem 6 · Relabeling invariance of the descriptor map</span>
     <p>For every permutation $\pi\in S_n$, $\phi(\pi G)=\phi(G)$ componentwise. In particular the learned regressor receives identical inputs for isomorphic graphs and cannot exploit node-order leakage.</p>
-    <span class="interp">Makes family-held-out transfer well posed; verified numerically to $10^{-8}$.</span>
+    <span class="interp">Makes family-held-out transfer well posed and forecloses node-order leakage; verified numerically to $10^{-8}$.</span>
   </div>
 
   <div class="thm">
     <span class="name">Proposition 7 · WL equivariance and message-passing upper bound</span>
     <p>The Weisfeiler–Lehman colour multiset after any fixed number of rounds is permutation invariant, and any message-passing GNN with permutation-invariant readout on the same initial features cannot distinguish two graphs that WL fails to distinguish.</p>
-    <span class="interp">Justifies the WL histogram as a principled, dependency-light stand-in for a GNN.</span>
+    <span class="interp">Grounds the WL histogram as a principled, dependency-light stand-in for a GNN.</span>
   </div>
 
   <div class="thm">
     <span class="name">Corollary 8 · The learned policy is a deterministic class function</span>
     <p>The graph-conditioned policy $\Theta(G)=\tfrac1k\sum_{j\in N_k(G)}\theta_j$ satisfies $\Theta(\pi G)=\Theta(G)$ and is a deterministic function of $G$ given the seeded training set.</p>
-    <span class="interp">The warm start is a principled estimator on isomorphism classes, reproducible across runs.</span>
+    <span class="interp">Establishes the warm start as a principled estimator on isomorphism classes, reproducible across runs.</span>
   </div>
 
   <div class="thm">
     <span class="name">Proposition 9 · Monotonicity and warm-start floor of the refiner</span>
     <p>The running-best ratio $r_t=\max(r_{t-1},\rho_t)$ is monotone non-decreasing in $t$ and satisfies $r_t\ge r_0$ for all $t$; a policy with high $r_0$ cannot be overtaken below $r_0$.</p>
-    <span class="interp">Explains the frontier's shape — structure-aware head starts are equalized onto a common ratio near 0.7846 rather than any collapsing.</span>
+    <span class="interp">Explains the frontier's shape — the refiner equalizes structure-aware head starts onto a common ratio near 0.7846, with none collapsing below its starting value.</span>
   </div>
 </section>
 
 <!-- EMPIRICAL -->
 <section id="empirical">
   <h2>Empirical Validation</h2>
-  <p class="lead">Headline results from the reported-scale configuration <code>configs/full.yaml</code>: 120 connected graphs (20 per family across six families), sizes $n\in\{10,12,14,16\}$, depth one, query budget 40, master seed 0. Pipeline runtime 29.3 s at 173.6 MB peak on a single laptop CPU. All values transcribed verbatim from <code>results/summary.json</code>; means with 95% CIs ($1.96\,s/\sqrt{n}$) over $n=120$ test evaluations.</p>
+  <p class="lead">Results from the reported-scale configuration <code>configs/full.yaml</code>: 120 connected graphs (20 per family across six families), sizes $n\in\{10,12,14,16\}$, depth one, query budget 40, master seed 0 — the full pipeline running in 29.3 s at 173.6 MB peak on a single laptop CPU. Every value is transcribed verbatim from <code>results/summary.json</code>; entries are means with 95% CIs ($1.96\,s/\sqrt{n}$) over $n=120$ test evaluations.</p>
 
   <h3>Held-out approximation ratio at matched budget <span class="badge">Table 1</span></h3>
   <table>
@@ -294,7 +295,7 @@
       <tr><td>RL (CEM)</td><td>0.7808 ± 0.0092</td><td>0.6835</td><td>40.00</td><td>0.00</td></tr>
     </tbody>
   </table>
-  <p class="note">The learned graph-conditioned policy matches the spectral and topology baselines to within statistical resolution — their means differ by $\sim4\times10^{-5}$, two orders of magnitude below the shared $\pm0.0093$ interval — while all three exceed random by 0.052 (≈7% relative). No policy reached the stringent 0.95 target within 40 queries, so queries-to-target equals the budget and the hit rate is 0.00 for all; reported transparently rather than relaxing the target.</p>
+  <p class="note">The learned graph-conditioned policy is statistically indistinguishable from the spectral and topology baselines: their means differ by $\sim4\times10^{-5}$, two orders of magnitude below the shared $\pm0.0093$ interval, while all three clear random by 0.052 (≈7% relative). No policy met the stringent 0.95 target within 40 queries, so queries-to-target equals the budget and the hit rate is 0.00 throughout — reported as observed rather than by relaxing the target.</p>
 
   <h3>Query-budget frontier <span class="badge">Extended Data Table 2</span></h3>
   <table>
@@ -307,7 +308,7 @@
       <tr><td>RL (CEM)</td><td>0.6835</td><td>0.7190</td><td>0.7565</td><td>0.7721</td><td>0.7794</td><td>0.7808</td></tr>
     </tbody>
   </table>
-  <p class="note">Random's final (40-query) ratio of 0.7327 is already exceeded by every structure-aware policy on its first evaluation, and random never reaches the graph-conditioned one-query ratio (0.7807) anywhere within the budget. By Proposition 9 each curve is monotone and pinned at or above its one-query value, so the refiner equalizes structure-aware head starts onto a common ratio near 0.7846.</p>
+  <p class="note">Every structure-aware policy already exceeds random's final 40-query ratio of 0.7327 on its first evaluation, and random never attains the graph-conditioned one-query ratio of 0.7807 anywhere within the budget. By Proposition 9 each curve is monotone and pinned at or above its one-query value, so the refiner draws the structure-aware head starts together onto a common ratio near 0.7846.</p>
 
   <h3>Per-family held-out approximation ratio <span class="badge">Extended Data Table 1</span></h3>
   <table>
@@ -321,13 +322,13 @@
       <tr><td>Stochastic block</td><td>0.7825</td><td>0.8286</td><td class="best">0.8288</td><td>0.8288</td><td>0.8225</td></tr>
     </tbody>
   </table>
-  <p class="note">All per-family means carry $\pm95\%$ CIs over $n=20$ held-out graphs (omitted here for width; see the paper). Family identity — not the choice among structure-aware policies — explains essentially all variation: easiest on stochastic-block (0.8288) and Erdős–Rényi (0.8269), hardest on grids (0.6948), where depth-one MaxCut is intrinsically harder; the graph-conditioned and spectral means differ by at most a few parts in $10^4$ in every family.</p>
+  <p class="note">Each per-family mean carries a $\pm95\%$ CI over $n=20$ held-out graphs (omitted here for width; see the paper). The variation is driven by family identity, not by the choice among structure-aware policies: ratios run easiest on stochastic-block (0.8288) and Erdős–Rényi (0.8269) and hardest on grids (0.6948), where depth-one MaxCut is intrinsically harder, while the graph-conditioned and spectral means stay within a few parts in $10^4$ of each other in every family.</p>
 </section>
 
 <!-- DEMO -->
 <section id="demo">
   <h2>Interactive Illustration of the Depth-One Objective</h2>
-  <p class="lead">An in-browser evaluation of the governing per-edge closed form (Proposition 3) on a synthetic, degree-homogeneous neighbourhood. This is an interactive illustration of the mechanism the paper analyzes — not a re-run of the benchmark experiments.</p>
+  <p class="lead">An in-browser evaluation of the governing per-edge closed form (Proposition 3) on a synthetic, degree-homogeneous neighbourhood. It illustrates the mechanism the paper analyzes; it does not re-run the benchmark experiments.</p>
 
   <div class="demo">
     <div class="controls">
@@ -365,23 +366,23 @@
       <span><i style="background:#1f6feb"></i>spectral-rule γ₀ marker</span>
       <span><i style="background:#c0392b"></i>argmax over γ</span>
     </div>
-    <p class="note">The closed form $\langle C_{uv}\rangle=\tfrac12+\tfrac14\sin(4\beta)\sin\gamma\,[\cos^{d_u}\gamma+\cos^{d_v}\gamma]-\tfrac14\sin^2(2\beta)\cos^{d_u+d_v-2f}\gamma\,[1-\cos^{f}(2\gamma)]$ is evaluated for a homogeneous neighbourhood $d_u=d_v=\bar d$ with $f=\lfloor (f/\bar d)\cdot\bar d\rfloor$ common neighbours. As $\bar d$ rises the optimal $\gamma$ contracts toward $0$, mirroring the topology rule $\gamma_0=\arctan(1/\sqrt{\bar d})$ and the spectral rule's dependence on graph structure — the qualitative reason both structure-aware initializers land in the same basin and end at a common ratio.</p>
+    <p class="note">The closed form $\langle C_{uv}\rangle=\tfrac12+\tfrac14\sin(4\beta)\sin\gamma\,[\cos^{d_u}\gamma+\cos^{d_v}\gamma]-\tfrac14\sin^2(2\beta)\cos^{d_u+d_v-2f}\gamma\,[1-\cos^{f}(2\gamma)]$ is evaluated for a homogeneous neighbourhood $d_u=d_v=\bar d$ with $f=\lfloor (f/\bar d)\cdot\bar d\rfloor$ common neighbours. As $\bar d$ grows the optimal $\gamma$ contracts toward $0$, tracking the topology rule $\gamma_0=\arctan(1/\sqrt{\bar d})$ and the spectral rule's dependence on graph structure — which is the qualitative reason both structure-aware initializers settle into the same basin and converge to a common ratio.</p>
   </div>
 </section>
 
 <!-- IMPACT -->
 <section id="impact">
   <h2>Significance and Impact</h2>
-  <p class="lead">A reusable, honest yardstick for warm-start research, a sharpened open question, and an actionable conclusion for practitioners — with the study's limitations kept in plain view.</p>
-  <p><b>For the field.</b> The framework — a proven relabeling-invariant descriptor, a query-counted refiner, two cross-verified objective evaluators, exact approximation ratios, and family-held-out splits with leakage checks — forms a reusable benchmark against which future, and genuinely stronger, warm-start policies can be measured. The controlled null result is itself informative: a structured generalization of the angle-transfer literature, it confirms that good depth-one angles are largely a function of coarse graph structure, which both the spectral rule and the learned descriptor capture.</p>
-  <p><b>For downstream application.</b> The efficiency framing is the practically load-bearing one: structure-aware policies reach near-final quality from the very first query — the property that matters when each query is an expensive circuit execution. The benchmark sharpens a concrete open question — whether <em>any</em> learned policy can extend that early-budget edge through the refinement phase rather than seeing it erased — and provides the harness to test it, including a drop-in slot for a trained message-passing GNN backend.</p>
+  <p class="lead">The work delivers a reusable yardstick for warm-start research, a sharpened open question, and an actionable conclusion for practitioners — with the study's limitations kept in plain view.</p>
+  <p><b>For the field.</b> The five components — a proven relabeling-invariant descriptor, a query-counted refiner, two cross-verified objective evaluators, exact approximation ratios, and family-held-out splits with leakage checks — together constitute a benchmark against which future and genuinely stronger warm-start policies can be measured on equal terms. The controlled null result carries information of its own: as a disciplined extension of the angle-transfer literature, it shows that good depth-one angles are largely determined by coarse graph structure — structure that the one-line spectral rule and the learned descriptor capture about equally well.</p>
+  <p><b>For practice.</b> The efficiency finding is the one that bears weight where it counts: structure-aware policies reach near-final quality from the very first query, precisely the regime in which each query is an expensive circuit execution. The benchmark turns this into a concrete open question — whether <em>any</em> learned policy can carry that early-budget advantage through refinement rather than having it erased — and ships the harness to answer it, including a drop-in slot for a trained message-passing GNN backend.</p>
   <div class="lim">
     <b>Honest limitations (carried from the paper, unmodified).</b>
     <ul class="tight">
-      <li>The study is at <b>depth one</b>, where an exact closed form makes the objective cheap and smooth; deeper circuits have rougher landscapes where a learned policy may have more room, and the closed form no longer applies.</li>
-      <li>Graphs are <b>small</b> ($n\le16$) so exact MaxCut ground truth is tractable; behaviour at advantage-relevant sizes is untested.</li>
-      <li>Graphs are <b>synthetic</b>; the reported run uses a <b>single master seed</b>, so confidence intervals are over the 120 graphs within that run, not over independent dataset redraws.</li>
-      <li>Objective values are <b>noiseless classical evaluations</b> with no shot or device noise; <b>no quantum-hardware or superiority claim</b> is made. The learned backend is a dependency-light descriptor regressor standing in for a GNN.</li>
+      <li>The study is confined to <b>depth one</b>, where the exact closed form keeps the objective cheap and smooth. Deeper circuits give rougher landscapes that may leave a learned policy more room, and there the closed form no longer holds.</li>
+      <li>Graphs are <b>small</b> ($n\le16$) so that exact MaxCut ground truth remains tractable; behaviour at advantage-relevant sizes is untested.</li>
+      <li>Graphs are <b>synthetic</b>, and the reported run uses a <b>single master seed</b>, so the confidence intervals cover the 120 graphs within that run, not independent dataset redraws.</li>
+      <li>Objective values are <b>noiseless classical evaluations</b>, free of shot or device noise; <b>no quantum-hardware or superiority claim</b> is made. The learned backend is a dependency-light descriptor regressor standing in for a GNN.</li>
     </ul>
   </div>
 </section>
@@ -389,8 +390,8 @@
 <!-- REPRODUCIBILITY -->
 <section id="repro">
   <h2>Reproducibility</h2>
-  <p class="lead">CPU-only, no quantum-software dependency. Every number is regenerated from fixed seeds and written to a single source of truth, <code>results/summary.json</code>.</p>
-  <p>The complete reference implementation — graph generators, the relabeling-invariant descriptors, the analytic and statevector QAOA evaluators, the budgeted refiner, all five warm-start policies, family-held-out splitting and leakage checks, metrics, the experiment runner, the figure and table generators, and the test suite (including the closed-form-versus-statevector and descriptor-invariance checks) — accompanies the manuscript in <code>submission/code</code>. It depends only on NumPy, SciPy, NetworkX, scikit-learn, Matplotlib, and PyYAML. The pip-installable package is <code>topoqaoa</code> (v0.1.0, MIT).</p>
+  <p class="lead">The pipeline is CPU-only with no quantum-software dependency, and every number is regenerated from fixed seeds into a single source of truth, <code>results/summary.json</code>.</p>
+  <p>The complete reference implementation accompanies the manuscript in <code>submission/code</code>: graph generators, the relabeling-invariant descriptors, the analytic and statevector QAOA evaluators, the budgeted refiner, all five warm-start policies, family-held-out splitting and leakage checks, metrics, the experiment runner, the figure and table generators, and the test suite — including the closed-form-versus-statevector and descriptor-invariance checks. It depends only on NumPy, SciPy, NetworkX, scikit-learn, Matplotlib, and PyYAML, and installs as the package <code>topoqaoa</code> (v0.1.0, MIT).</p>
   <pre><span class="cm"># obtain identical results — CPU only, ~29.3 s, ~173.6 MB peak</span>
 cd submission/code
 python3 -m pip install -e .            <span class="cm"># installs topoqaoa (numpy, scipy, networkx, scikit-learn, matplotlib, pyyaml)</span>
@@ -400,13 +401,13 @@ python3 scripts/make_tables.py
 python3 scripts/make_figures.py
 <span class="cm"># correctness checks: closed-form vs statevector (1e-9), descriptor invariance (1e-8), leakage</span>
 pytest -q</pre>
-  <p class="note">A single master seed (0) deterministically fixes graph generation, the random-policy draws, the grid search that labels training graphs, and the cross-entropy sampler. The leakage check passed for every fold (<code>leakage_clean: true</code>). Regenerating the dataset from the released code reproduces every reported value; an audit script verifies that reported numbers trace to generated artifacts and that no unsupported superiority phrasing appears.</p>
+  <p class="note">A single master seed (0) deterministically fixes graph generation, the random-policy draws, the grid search that labels training graphs, and the cross-entropy sampler, and the leakage check passes on every fold (<code>leakage_clean: true</code>). Rebuilding the dataset from the released code reproduces every reported value; an audit script then confirms that each number traces to a generated artifact and that no unsupported superiority phrasing appears.</p>
 </section>
 
 </main>
 
 <footer>
-  Topo·QAOA — Topology-conditioned warm starts match spectral initialization for depth-one QAOA · Molena Huynh.
+  Topo·QAOA — Topology-conditioned warm starts match spectral initialization for depth-one QAOA · Molena Huynh, North Carolina State University · <a href="mailto:molena.huynh@jmp.com">molena.huynh@jmp.com</a>.
   Every number on this page is transcribed verbatim from <code>results/summary.json</code>. No superiority or hardware claim is made.
 </footer>
 
