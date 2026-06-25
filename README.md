@@ -39,13 +39,13 @@ artifact (`code/results/summary.json`); none is hand-edited.
 3. **A cross-checked QAOA objective.** A full statevector simulator and the analytic depth-1
    MaxCut expression agree to a tolerance of 1e-9 across every family, so the closed form that
    drives the in-browser demo is verified against simulation.
-4. **A matched-budget head-to-head with an honest readout.** Random, spectral, topology,
+4. **A matched-budget, query-counted comparison.** Random, spectral, topology,
    graph-conditioned, and a cross-entropy refinement policy are evaluated against an exact
    oracle under family-held-out splits with an explicit leakage check. The topology-conditioned
    warm start matches spectral initialization within confidence intervals and does not surpass
    it.
 
-## Headline results (reported scale)
+## Main results (reported scale)
 
 Transcribed verbatim from `code/results/main_results.md`, generated from
 `code/results/summary.json`. Scale: 120 graphs (six families, 20 instances per family, sizes
@@ -114,7 +114,7 @@ and compare the resulting approximation ratio against the exact MaxCut optimum.
     ├── scripts/               Command-line entry points around the library
     ├── configs/               smoke.yaml (demo scale) · full.yaml (reported scale)
     ├── tests/                 Exact-MaxCut, closed-form vs statevector, invariance, leakage, metrics
-    ├── results/               Generated artifacts; summary.json is the single source of truth
+    ├── results/               Generated artifacts; summary.json is the authoritative artifact
     └── figures/               Generated PDFs (query-budget frontier and per-family bars)
 ```
 

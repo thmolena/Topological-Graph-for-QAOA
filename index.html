@@ -204,7 +204,7 @@
 <!-- NOVELTY -->
 <section id="novelty">
   <h2>Methodological Novelty</h2>
-  <p class="lead">The novelty resides in the experimental controls rather than in a new model: a leakage-aware, query-counted, cross-verified head-to-head against a strong-but-simple spectral baseline, underwritten by provable invariance.</p>
+  <p class="lead">The novelty resides in the experimental controls rather than in a new model: a leakage-aware, query-counted, cross-verified direct comparison against a strong-but-simple spectral baseline, underwritten by provable invariance.</p>
   <div class="grid2">
     <div class="card">
       <h4>Relative to the warm-start / angle-transfer literature</h4>
@@ -373,11 +373,11 @@
 <!-- IMPACT -->
 <section id="impact">
   <h2>Significance and Impact</h2>
-  <p class="lead">The work delivers a reusable yardstick for warm-start research, a sharpened open question, and an actionable conclusion for practitioners — with the study's limitations kept in plain view.</p>
+  <p class="lead">The work provides a reusable benchmark for warm-start research, a sharpened open question, and a practical conclusion for practitioners — with the study's limitations stated in full.</p>
   <p><b>For the field.</b> The five components — a proven relabeling-invariant descriptor, a query-counted refiner, two cross-verified objective evaluators, exact approximation ratios, and family-held-out splits with leakage checks — together constitute a benchmark against which future and genuinely stronger warm-start policies can be measured on equal terms. The controlled null result carries information of its own: as a disciplined extension of the angle-transfer literature, it shows that good depth-one angles are largely determined by coarse graph structure — structure that the one-line spectral rule and the learned descriptor capture about equally well.</p>
-  <p><b>For practice.</b> The efficiency finding is the one that bears weight where it counts: structure-aware policies reach near-final quality from the very first query, precisely the regime in which each query is an expensive circuit execution. The benchmark turns this into a concrete open question — whether <em>any</em> learned policy can carry that early-budget advantage through refinement rather than having it erased — and ships the harness to answer it, including a drop-in slot for a trained message-passing GNN backend.</p>
+  <p><b>For practice.</b> The efficiency finding is the one that matters most in practice: structure-aware policies reach near-final quality from the very first query, precisely the regime in which each query is an expensive circuit execution. The benchmark turns this into a concrete open question — whether <em>any</em> learned policy can carry that early-budget advantage through refinement rather than having it erased — and provides the harness to answer it, including an interface for a trained message-passing GNN backend.</p>
   <div class="lim">
-    <b>Honest limitations (carried from the paper, unmodified).</b>
+    <b>Limitations (carried from the paper, unmodified).</b>
     <ul class="tight">
       <li>The study is confined to <b>depth one</b>, where the exact closed form keeps the objective cheap and smooth. Deeper circuits give rougher landscapes that may leave a learned policy more room, and there the closed form no longer holds.</li>
       <li>Graphs are <b>small</b> ($n\le16$) so that exact MaxCut ground truth remains tractable; behaviour at advantage-relevant sizes is untested.</li>
@@ -390,7 +390,7 @@
 <!-- REPRODUCIBILITY -->
 <section id="repro">
   <h2>Reproducibility</h2>
-  <p class="lead">The pipeline is CPU-only with no quantum-software dependency, and every number is regenerated from fixed seeds into a single source of truth, <code>results/summary.json</code>.</p>
+  <p class="lead">The pipeline is CPU-only with no quantum-software dependency, and every number is regenerated from fixed seeds into a authoritative artifact, <code>results/summary.json</code>.</p>
   <p>The complete reference implementation accompanies the manuscript in <code>submission/code</code>: graph generators, the relabeling-invariant descriptors, the analytic and statevector QAOA evaluators, the budgeted refiner, all five warm-start policies, family-held-out splitting and leakage checks, metrics, the experiment runner, the figure and table generators, and the test suite — including the closed-form-versus-statevector and descriptor-invariance checks. It depends only on NumPy, SciPy, NetworkX, scikit-learn, Matplotlib, and PyYAML, and installs as the package <code>topoqaoa</code> (v0.1.0, MIT).</p>
   <pre><span class="cm"># obtain identical results — CPU only, ~29.3 s, ~173.6 MB peak</span>
 cd submission/code
