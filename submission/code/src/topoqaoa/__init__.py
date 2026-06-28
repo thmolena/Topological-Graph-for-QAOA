@@ -16,9 +16,11 @@ from . import (  # noqa: F401
     descriptors,
     env,
     graph_generators,
+    kernels,
     maxcut_exact,
     metrics,
     qaoa,
+    runner,
     seed,
     splits,
 )

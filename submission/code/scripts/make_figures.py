@@ -13,9 +13,14 @@ def main() -> None:
     out = Path("figures")
     out.mkdir(exist_ok=True)
     plotting.fig_schematic(summary, out / "fig_schematic.pdf")
+    plotting.fig_depth(summary, out / "fig_depth.pdf")
     plotting.fig_frontier(summary, out / "fig_frontier.pdf")
     plotting.fig_family_bars(summary, out / "fig_family.pdf")
-    print(f"wrote {out}/fig_schematic.pdf, {out}/fig_frontier.pdf, {out}/fig_family.pdf")
+    # PNG copies of the two headline figures for the web landing page (index.html).
+    plotting.fig_depth(summary, out / "fig_depth.png")
+    plotting.fig_frontier(summary, out / "fig_frontier.png")
+    print(f"wrote {out}/fig_schematic.pdf, {out}/fig_depth.pdf, "
+          f"{out}/fig_frontier.pdf, {out}/fig_family.pdf (+ headline PNGs)")
 
 
 if __name__ == "__main__":

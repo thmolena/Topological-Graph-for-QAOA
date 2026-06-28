@@ -29,10 +29,10 @@ def _sync_submission() -> None:
     for path in (code / "figures").glob("*"):
         if path.suffix.lower() in {".pdf", ".png"}:
             shutil.copy2(path, submission / "figures" / path.name)
-    for name in ("main_results.tex",):
-        src = code / "results" / name
-        if src.exists():
-            shutil.copy2(src, submission / "tables" / name)
+    # The manuscript \input's tables and macros directly from code/results, but
+    # we also mirror the generated LaTeX into submission/tables for convenience.
+    for src in (code / "results").glob("*.tex"):
+        shutil.copy2(src, submission / "tables" / src.name)
 
 
 def main(argv: list[str] | None = None) -> None:

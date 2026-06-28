@@ -30,9 +30,21 @@ def main() -> int:
         problems += audit.audit_forbidden_claims(text)
 
     # Every headline macro must be present (traceable to this run).
-    for key in ("gc_approx_ratio_mean", "query_efficiency_vs_random", "n_graphs"):
+    for key in ("stk_approx_ratio_mean", "delta_stk_vs_best_ramp",
+                "delta_stk_vs_best_ramp_first_query", "n_graphs"):
         if key not in flat:
             problems.append(f"headline macro {key!r} not generated")
+
+    # The reported depth-dependent finding must hold in the artifact: STK ties
+    # the ramp at p=1 (no significant advantage) and significantly beats it at
+    # the headline depth. This guards against silently shipping a run in which
+    # the claim does not actually hold.
+    adv = {row["p"]: row for row in summary.get("advantage_vs_depth", [])}
+    if 1 in adv and adv[1]["significant_positive"]:
+        problems.append("claim mismatch: STK significantly beats ramp at p=1 (should tie)")
+    hd = summary.get("headline_depth")
+    if hd in adv and not adv[hd]["significant_positive"]:
+        problems.append(f"claim mismatch: STK does not significantly beat ramp at p={hd}")
 
     if not summary.get("leakage_clean", False):
         problems.append("family-holdout leakage detected")

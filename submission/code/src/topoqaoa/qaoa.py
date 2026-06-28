@@ -106,3 +106,112 @@ def best_p1_on_grid(
             if val > best[0]:
                 best = (val, float(g), float(b))
     return best
+
+
+# --------------------------------------------------------------------------- #
+# Depth-p angle schedules: caching, split convention, fast cached evaluator    #
+# --------------------------------------------------------------------------- #
+# A depth-p warm start is a flat schedule  theta = [gamma_1..gamma_p, beta_1..beta_p].
+# The cost diagonal depends only on the graph, so we precompute it once per graph
+# and reuse it across the many objective calls an optimizer or refiner makes.
+
+def cost_diagonal(graph: nx.Graph) -> np.ndarray:
+    """Public handle on the per-basis-state cut values (cached by the caller)."""
+    return _cost_diagonal(graph, graph.number_of_nodes())
+
+
+def split_schedule(theta: Sequence[float]) -> Tuple[np.ndarray, np.ndarray]:
+    """Split a flat length-``2p`` schedule into ``(gammas, betas)``."""
+    theta = np.asarray(theta, dtype=float)
+    p = theta.size // 2
+    return theta[:p], theta[p:]
+
+
+def expectation_from_cost(
+    cost: np.ndarray, n: int, gammas: Sequence[float], betas: Sequence[float]
+) -> float:
+    """``<C>`` for a precomputed cost diagonal (statevector, arbitrary depth)."""
+    psi = np.full(2 ** n, 1.0 / np.sqrt(2 ** n), dtype=complex)
+    for gamma, beta in zip(gammas, betas):
+        psi = np.exp(-1j * gamma * cost) * psi
+        psi = _apply_mixer(psi, beta, n)
+    return float(np.sum(cost * np.abs(psi) ** 2))
+
+
+def expectation_schedule(
+    graph: nx.Graph, theta: Sequence[float], cost: np.ndarray | None = None
+) -> float:
+    """``<C>`` for a flat depth-p schedule on ``graph`` (statevector)."""
+    n = graph.number_of_nodes()
+    if cost is None:
+        cost = _cost_diagonal(graph, n)
+    gammas, betas = split_schedule(theta)
+    return expectation_from_cost(cost, n, gammas, betas)
+
+
+# --------------------------------------------------------------------------- #
+# INTERP-seeded schedule optimization (training-label oracle)                  #
+# --------------------------------------------------------------------------- #
+def _interp_seed(theta_p: np.ndarray) -> np.ndarray:
+    """Linear-interpolation (INTERP, Zhou et al. 2020) seed from depth p to p+1.
+
+    The optimized depth-p schedule is resampled onto a depth-(p+1) grid, which
+    places the (p+1)-layer search inside the basin of the p-layer optimum and is
+    the standard way to grow good QAOA schedules with depth.
+    """
+    gammas, betas = split_schedule(theta_p)
+    p = gammas.size
+    if p == 1:
+        return np.concatenate([np.full(2, gammas[0]), np.full(2, betas[0])])
+    xp = np.linspace(0.0, 1.0, p)
+    xnew = np.linspace(0.0, 1.0, p + 1)
+    return np.concatenate([np.interp(xnew, xp, gammas), np.interp(xnew, xp, betas)])
+
+
+def optimize_schedule(
+    graph: nx.Graph,
+    p: int,
+    rng: np.random.Generator | None = None,
+    restarts: int = 2,
+) -> Tuple[float, np.ndarray]:
+    """Best depth-``p`` schedule found by INTERP growth plus random restarts.
+
+    Used only to *label* training graphs with near-optimal angle schedules; the
+    learned policies must then predict these from topology alone. Returns
+    ``(best_expected_cut, theta)`` with ``theta`` a flat length-``2p`` vector.
+    For p=1 the closed-form grid optimum seeds the search (globally reliable).
+    """
+    from scipy.optimize import minimize
+
+    n = graph.number_of_nodes()
+    cost = _cost_diagonal(graph, n)
+
+    def neg(theta: np.ndarray) -> float:
+        gammas, betas = theta[: theta.size // 2], theta[theta.size // 2 :]
+        return -expectation_from_cost(cost, n, gammas, betas)
+
+    def polish(seed: np.ndarray) -> np.ndarray:
+        res = minimize(
+            neg,
+            seed,
+            method="Nelder-Mead",
+            options={"maxiter": 80 * seed.size, "xatol": 1e-4, "fatol": 1e-6},
+        )
+        return res.x
+
+    # Seed at depth 1 from the exact closed-form grid, then grow by INTERP.
+    _, g1, b1 = best_p1_on_grid(graph)
+    cur = polish(np.array([g1, b1])) if p == 1 else np.array([g1, b1])
+    for _ in range(2, p + 1):
+        cur = polish(_interp_seed(cur))
+
+    candidates = [cur]
+    if rng is not None and restarts > 0:
+        for _ in range(restarts):
+            seed = np.concatenate(
+                [rng.uniform(0, np.pi, p), rng.uniform(0, np.pi / 2, p)]
+            )
+            candidates.append(polish(seed))
+    vals = [-neg(c) for c in candidates]
+    j = int(np.argmax(vals))
+    return float(vals[j]), np.asarray(candidates[j], dtype=float)

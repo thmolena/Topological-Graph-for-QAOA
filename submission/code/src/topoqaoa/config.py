@@ -20,6 +20,15 @@ class Config:
     sizes: List[int] = field(default_factory=lambda: [6, 8])
     budget: int = 12
     target_ratio: float = 0.95
+    # Depths at which the full benchmark is run; the depth-dependence of the
+    # learned-vs-spectral advantage is the headline result.
+    depths: List[int] = field(default_factory=lambda: [1, 2, 3])
+    headline_depth: int = 2
+    # Spectral-truncation-kernel hyper-parameters (fixed; never tuned per result).
+    stk_r: int = 6
+    stk_ridge: float = 1e-2
+    # Random restarts used by the INTERP-seeded schedule-labelling oracle.
+    label_restarts: int = 2
 
     @classmethod
     def load(cls, path: str | Path) -> "Config":
