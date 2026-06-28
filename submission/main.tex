@@ -99,7 +99,10 @@ Each graph $G$ is mapped to two relabeling-invariant objects. The topology descr
 
 On standardized features, the spectral-truncation kernel is the product of two Gaussian factors,
 \begin{equation}
-k(G,G')=\exp\!\Big(\!-\tfrac{\norm{\sigma_r(G)-\sigma_r(G')}^2}{2\ell_s^2}\Big)\,\exp\!\Big(\!-\tfrac{\norm{\phi(G)-\phi(G')}^2}{2\ell_d^2}\Big),
+\begin{aligned}
+k(G,G')={}&\exp\!\Big(\!-\tfrac{\norm{\sigma_r(G)-\sigma_r(G')}^2}{2\ell_s^2}\Big)\\
+&\times\exp\!\Big(\!-\tfrac{\norm{\phi(G)-\phi(G')}^2}{2\ell_d^2}\Big),
+\end{aligned}
 \label{eq:kernel}
 \end{equation}
 with bandwidths $\ell_s,\ell_d>0$ set by the median heuristic. The STK policy outputs $\Theta(G)=\theta_{j^\star}$ with $j^\star=\arg\max_i k(G,G_i)$, the optimized schedule of the kernel-nearest training graph. The two feature maps are relabeling invariant, so $k$ is invariant and, as a Hadamard product of Gaussian radial basis functions, positive definite; the transfer policy is consequently a deterministic function of the isomorphism class. This places STK on the same footing as the established operator-truncation kernels of Hashimoto \textit{et al.}~\cite{hashimoto2024spectral}, with the graph Laplacian as the truncated operator and QAOA schedule transfer as the downstream task. A kernel-ridge variant that averages over donors via $(K+\lambda I)^{-1}$ is included in the package as an ablation and reproduces the between-basins behavior of the descriptor mean.
@@ -129,12 +132,12 @@ The picture changes qualitatively for $p\ge2$, where the warm start must specify
 \subsection{Per-policy performance and query efficiency}
 Table~\ref{tab:main} reports, at the primary depth $p{=}\headlinedepth$, the held-out final approximation ratio (mean over the $n=\Ngraphs$ test evaluations with $95\%$ confidence interval), the one-shot ($q{=}1$) ratio, the mean queries to a target of $0.95$, and the target hit rate. STK attains both the best final ratio ($\frStkPII$) and the best one-shot ratio ($\fqStkPII$): its transferred schedule is already near its final quality on the first evaluation, whereas the ramps start far lower ($\fqTopologyPII$ for topology, $\fqSpectralPII$ for spectral) and the random control lower still ($\fqRandomPII$). This one-shot gap is the principal separation between the two learned policies at this depth. The descriptor mean reaches a competitive final ratio ($\frGcPII$, itself above both ramps) but a much weaker one-shot ratio ($\fqGcPII$), because its between-basins average must be repaired by the refiner, whereas the single transferred optimum of STK needs no repair. Transfer is therefore the more query-efficient form of the same topology conditioning, delivering near-final quality per query. No policy reached the stringent $0.95$ target within $\budgetval$ queries at this depth, so queries-to-target equals the budget and the hit rate is zero for all policies; we report this transparently rather than relaxing the target.
 
-\begin{table}[t]
+\begin{table*}[t]
 \centering
 \caption{Per-policy warm-start benchmark at the primary depth $p{=}\headlinedepth$. Mean held-out depth-$\headlinedepth$ approximation ratio over $n=\Ngraphs$ family-held-out test evaluations ($\pm95\%$ confidence interval, $1.96\,s/\sqrt{n}$); one-shot ($q{=}1$) ratio; mean queries to reach the $0.95$ target (capped at the budget $B=\budgetval$); and target hit rate. STK attains the best final and one-shot ratios; the descriptor mean reaches a competitive final ratio but a much weaker one-shot ratio. Bold marks the highest value in the final-ratio column. Values transcribed by code from \texttt{results/summary.json}.}
 \label{tab:main}
 \input{code/results/tab_main.tex}
-\end{table}
+\end{table*}
 
 \subsection{Query-budget frontier}
 Fig.~\ref{fig:frontier} plots the mean running-best approximation ratio against the query budget, one panel per depth. At $p{=}1$ the structure-aware curves are superimposed and the refiner equalizes them within a few queries. At $p{=}2$ and $p{=}3$ the STK curve starts far above the ramps, with its one-shot value already approaching their final values, and stays above them throughout: the local refiner improves all policies but cannot move a poorly seeded ramp out of the inferior basin it started in, so the head start is not equalized as it was at depth one. The two learned policies differ most at $p{=}2$, where the averaging-based learner starts near the ramps and well below STK, consistent with a between-basins seed that the refiner must repair, and closes much of the gap only by the end of the budget; at $p{=}3$ the averaging learner already begins near STK, so the early-budget gap between the two learned policies has largely closed. Table~\ref{tab:extfrontier} reports the frontier at selected query indices.

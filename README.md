@@ -4,6 +4,8 @@ Topology-conditioned schedule transfer that surpasses adiabatic initialization b
 
 <p align="center"><b><a href="submission/main.pdf">Read the manuscript (PDF)</a></b> &middot; <a href="index.html">Full tutorial</a> &middot; <a href="submission/code">Reproducibility package</a></p>
 
+> **AI for quantum, at HPC scale.** The warm start is *learned transfer*: a positive-definite, relabeling-invariant spectral-truncation kernel on the graph Laplacian selects the most similar training instance and donates its optimized depth-`p` schedule — a one-shot, near-optimal initializer that ties an adiabatic ramp at depth one and beats it by a growing margin beyond it (**+0.026** at `p=3`). The depth-`p` QAOA objective is an exact statevector expectation, the regime GPU statevector backends (NVIDIA cuQuantum / cuStateVec) accelerate, and the kernel is plain batched linear algebra. Every number regenerates from fixed seeds.
+
 <p align="center">
   <a href="https://thmolena.github.io/P1-Topology-Guided-Graph-RL-for-QAOA-Warm-Starts/"><img alt="Live demo" src="https://img.shields.io/badge/demo-live-1f6feb"></a>
   <a href="submission/main.pdf"><img alt="Paper (PDF)" src="https://img.shields.io/badge/paper-PDF%20%C2%B7%20in%20review-informational"></a>
