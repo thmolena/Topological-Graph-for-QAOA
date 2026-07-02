@@ -115,11 +115,12 @@
   <a href="#demo">Demo</a>
   <a href="#impact">Impact</a>
   <a href="#repro">Reproducibility</a>
+  <a href="#cite">Cite</a>
 </div></nav>
 
 <header class="hero">
   <span class="tag">Variational quantum optimization · Spectral graph kernels · Reproducible NISQ benchmarking</span>
-  <h1>Spectral-truncation graph kernels transfer QAOA angle schedules and surpass adiabatic warm starts beyond depth one</h1>
+  <h1>Spectral-truncation graph kernels for QAOA warm starts: topology-conditioned schedule transfer beyond depth one</h1>
   <p class="sub">A relabeling-invariant, positive-definite kernel on the truncated graph Laplacian spectrum selects, for each test graph, the single most similar training graph and transfers its optimized depth-$p$ schedule. On a query-counted, leakage-controlled MaxCut benchmark this kernel-transfer warm start ties an adiabatic ramp at depth one and surpasses it for $p\ge2$ by a margin that grows with depth, attaining the best one-shot ratio at every depth.</p>
   <p class="auth">Molena Huynh <span>· North Carolina State University · <a href="mailto:molena.huynh@jmp.com">molena.huynh@jmp.com</a></span></p>
   <p class="auth" style="margin-top:6px;font-weight:400"><span>Depth-$p$ QAOA · exact-MaxCut ground truth · cross-verified objective · provable kernel invariance and positive-definiteness</span></p>
@@ -130,8 +131,8 @@
     <div class="chip"><b>84 graphs</b><span>6 families · family-held-out · leakage-clean</span></div>
   </div>
   <div class="cta">
-    <a class="btn primary" href="#demo">Open the depth-$p$ demonstration</a>
-    <a class="btn" href="https://thmolena.github.io/Topological-Graph-for-QAOA/submission/main.pdf">Read the paper (PDF)</a>
+    <a class="btn primary" href="https://thmolena.github.io/Topological-Graph-for-QAOA/submission/main.pdf">Read the paper (PDF)</a>
+    <a class="btn" href="#demo">Open the depth-$p$ demonstration</a>
     <a class="btn" href="submission/code">Code artifact</a>
   </div>
 </header>
@@ -317,7 +318,9 @@
   <p class="lead">The pipeline is CPU-only with no quantum-software dependency, and every number is regenerated from fixed seeds into an authoritative artifact, <code>results/summary.json</code>.</p>
   <p>The complete reference implementation accompanies the manuscript as the <code>pip</code>-installable package <code>topoqaoa</code> in <code>submission/code</code>: graph generators, the relabeling-invariant descriptors and the spectral-truncation kernel, the analytic and statevector QAOA evaluators, the interpolation-seeded schedule-labelling oracle, the budgeted refiner, all warm-start policies, family-held-out splitting and leakage checks, metrics, the runner, the figure and table generators, and the test suite — including the closed-form-versus-statevector, descriptor- and kernel-invariance, and kernel positive-definiteness checks.</p>
   <pre><span class="cm"># obtain identical results — CPU only, a few minutes on a laptop</span>
-pip install ./submission/code        <span class="cm"># installs topoqaoa (numpy, scipy, networkx, scikit-learn, matplotlib, pyyaml)</span>
+pip install specops-stk               <span class="cm"># distribution name; imports as the topoqaoa module</span>
+<span class="cm"># or install the accompanying source artifact directly:</span>
+pip install ./submission/code        <span class="cm"># numpy, scipy, networkx, scikit-learn, matplotlib, pyyaml</span>
 cd submission/code
 python3 scripts/run.py --config configs/full.yaml --out results
 <span class="cm"># regenerate the depth/frontier/family figures and the LaTeX tables + macros</span>
@@ -328,6 +331,22 @@ topoqaoa-reproduce --config configs/full.yaml
 <span class="cm"># correctness checks: closed-form vs statevector (1e-9), invariance (1e-8), kernel PSD, leakage</span>
 pytest -q</pre>
   <p class="note">A single master seed (0) deterministically fixes graph generation, the schedule-labelling oracle, and every policy, and the leakage check passes on every fold (<code>leakage_clean: true</code>). Rebuilding from the released code reproduces every reported value; an audit script then confirms that each number traces to a generated artifact and that the depth-dependent claim holds in the artifact.</p>
+</section>
+
+<!-- CITE -->
+<section id="cite">
+  <h2>Cite this work</h2>
+  <p class="lead">The reference implementation is distributed as the <code>pip</code>-installable package <code>specops-stk</code>. If the method, the benchmark, or the software is used, please cite the manuscript.</p>
+  <pre>@article{huynh2026topoqaoa,
+  author  = {Huynh, Molena},
+  title   = {Spectral-truncation graph kernels for {QAOA} warm starts:
+             topology-conditioned schedule transfer beyond depth one},
+  journal = {Manuscript},
+  year    = {2026},
+  note    = {Part of the spectral-truncation operators program},
+  url     = {https://thmolena.github.io/Topological-Graph-for-QAOA/submission/main.pdf}
+}</pre>
+  <p class="note">Software metadata is additionally provided in <code>submission/code/CITATION.cff</code>.</p>
 </section>
 
 <!-- REFERENCES -->
