@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Spectral-Truncation Graph Kernels for QAOA Warm Starts — Topology-Conditioned Schedule Transfer Beyond Depth One</title>
-<meta name="description" content="A relabeling-invariant, positive-definite spectral-truncation graph kernel transfers optimized QAOA angle schedules across graph families. On a query-counted, leakage-controlled MaxCut benchmark the kernel-transfer warm start ties an adiabatic ramp at depth one and surpasses it for p>=2 by a margin that grows with depth, attaining the best one-shot ratio at every depth. Includes an in-browser depth-p demonstration of the underlying mechanism.">
+<meta name="description" content="A relabeling-invariant, positive-definite spectral-truncation graph kernel transfers optimized QAOA angle schedules across graph families. On a query-counted, leakage-controlled MaxCut benchmark the kernel-transfer warm start ties an adiabatic ramp at depth one and surpasses it for p>=2 by a margin that grows with depth, attaining the best one-shot ratio through depth two (at p=3 the averaging learner draws statistically level). Includes an in-browser depth-p demonstration of the underlying mechanism.">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" crossorigin="anonymous">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" crossorigin="anonymous"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" crossorigin="anonymous"
@@ -121,7 +121,7 @@
 <header class="hero">
   <span class="tag">Variational quantum optimization · Spectral graph kernels · Reproducible NISQ benchmarking</span>
   <h1>Spectral-truncation graph kernels for QAOA warm starts: topology-conditioned schedule transfer beyond depth one</h1>
-  <p class="sub">A relabeling-invariant, positive-definite kernel on the truncated graph Laplacian spectrum selects, for each test graph, the single most similar training graph and transfers its optimized depth-$p$ schedule. On a query-counted, leakage-controlled MaxCut benchmark this kernel-transfer warm start ties an adiabatic ramp at depth one and surpasses it for $p\ge2$ by a margin that grows with depth, attaining the best one-shot ratio at every depth.</p>
+  <p class="sub">A relabeling-invariant, positive-definite kernel on the truncated graph Laplacian spectrum selects, for each test graph, the single most similar training graph and transfers its optimized depth-$p$ schedule. On a query-counted, leakage-controlled MaxCut benchmark this kernel-transfer warm start ties an adiabatic ramp at depth one and surpasses it for $p\ge2$ by a margin that grows with depth, attaining the best one-shot ratio through depth two (at p=3 the averaging learner draws statistically level).</p>
   <p class="auth">Molena Huynh <span>· North Carolina State University · <a href="mailto:molena.huynh@jmp.com">molena.huynh@jmp.com</a></span></p>
   <p class="auth" style="margin-top:6px;font-weight:400"><span>Depth-$p$ QAOA · exact-MaxCut ground truth · cross-verified objective · provable kernel invariance and positive-definiteness</span></p>
   <div class="chips">
@@ -205,10 +205,10 @@
     <tbody>
       <tr><td>1</td><td>0.7825</td><td>0.7824</td><td>0.7825</td><td>0.7827</td><td>+0.0000 ± 0.0001</td><td>+0.0030</td></tr>
       <tr><td>2</td><td>0.8394</td><td>0.8470</td><td class="best">0.8503</td><td>0.8536</td><td>+0.0103 ± 0.0019</td><td>+0.0416</td></tr>
-      <tr><td>3</td><td>0.8622</td><td>0.8925</td><td class="best">0.8902</td><td>0.8999</td><td>+0.0262 ± 0.0026</td><td>+0.0454</td></tr>
+      <tr><td>3</td><td>0.8622</td><td class="best">0.8925</td><td>0.8902</td><td>0.8999</td><td>+0.0262 ± 0.0026</td><td>+0.0454</td></tr>
     </tbody>
   </table>
-  <p class="note">$\Delta_{\text{final}}$ and $\Delta_{\text{one-shot}}$ are the <em>paired</em> mean differences between STK and the best per-instance ramp on the final-budget and first-query ratios; both $p\ge2$ final advantages lie outside their paired 95% confidence intervals. The averaging-based descriptor mean also improves on the ramp at depth, so topology conditioning — not the specific estimator — is what helps; transfer is distinguished by its one-shot quality.</p>
+  <p class="note">$\Delta_{\text{final}}$ and $\Delta_{\text{one-shot}}$ are the <em>paired</em> mean differences between STK and the best per-instance ramp on the final-budget and first-query ratios; both $p\ge2$ final advantages lie outside their paired 95% confidence intervals. The averaging-based descriptor mean also improves on the ramp at depth, so topology conditioning — not the specific estimator — is what helps; transfer is distinguished by its one-shot quality. Highlighted cells mark the best learned-policy mean in each row; at $p=3$ the descriptor mean (0.8925) nominally edges STK (0.8902) on both the final and one-shot ratios, within overlapping 95% confidence intervals.</p>
 
   <h3>Per-policy performance at $p=2$ <span class="badge">Table 2</span></h3>
   <table>

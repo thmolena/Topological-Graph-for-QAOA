@@ -26,11 +26,11 @@ def _sync_submission() -> None:
     submission = code.parent
     (submission / "figures").mkdir(exist_ok=True)
     (submission / "tables").mkdir(exist_ok=True)
-    for path in (code / "figures").glob("*"):
-        if path.suffix.lower() in {".pdf", ".png"}:
-            shutil.copy2(path, submission / "figures" / path.name)
-    # The manuscript \input's tables and macros directly from code/results, but
-    # we also mirror the generated LaTeX into submission/tables for convenience.
+    # The manuscript reads figures/*.pdf and tables/*.tex at the submission top
+    # level; mirror exactly what it references (PDF figures, and the LaTeX
+    # tables/macros generated from results/summary.json).
+    for path in (code / "figures").glob("*.pdf"):
+        shutil.copy2(path, submission / "figures" / path.name)
     for src in (code / "results").glob("*.tex"):
         shutil.copy2(src, submission / "tables" / src.name)
 
@@ -38,10 +38,16 @@ def _sync_submission() -> None:
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", default="configs/full.yaml")
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help="run the smoke-scale configuration (configs/smoke.yaml): seconds instead of minutes",
+    )
     parser.add_argument("--skip-run", action="store_true")
     args = parser.parse_args(argv)
+    config = "configs/smoke.yaml" if args.quick else args.config
     if not args.skip_run:
-        _run("scripts/run.py", "--config", args.config, "--out", "results")
+        _run("scripts/run.py", "--config", config, "--out", "results")
     _run("scripts/make_tables.py")
     _run("scripts/make_figures.py")
     _sync_submission()

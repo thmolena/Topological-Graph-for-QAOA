@@ -85,8 +85,11 @@ kernel.
    relabeling-invariant kernel on the truncated normalized-Laplacian spectrum
    whose nearest neighbour transfers a single optimized depth-`p` schedule. It is
    proven invariant and positive definite, making the warm start a deterministic
-   function of the graph's isomorphism class, and it attains the best final and
-   one-shot approximation ratios at the tested depths.
+   function of the graph's isomorphism class. It attains the best one-shot
+   ratio of any policy at `p=1` and `p=2` and the best final ratio at `p=2`;
+   at `p=3` the averaging descriptor-mean learner draws statistically level
+   (final `0.8925` vs `0.8902`, one-shot `0.8853` vs `0.8845`, overlapping
+   95% CIs), while STK's margin over the ramps keeps growing with depth.
 
 3. **A cross-verified, reproducible benchmark.** A proven relabeling-invariant
    descriptor and kernel, a depth-one objective cross-verified to `1e-9` by two
@@ -138,6 +141,11 @@ mean / STK / oracle, and the paired STK − ramp advantage):
 | 1 | 0.7825 | 0.7824 | 0.7825 | 0.7827 | +0.0000 ± 0.0001 | +0.0030 |
 | 2 | 0.8394 | 0.8470 | **0.8503** | 0.8536 | +0.0103 ± 0.0019 | +0.0416 |
 | 3 | 0.8622 | 0.8925 | **0.8902** | 0.8999 | +0.0262 ± 0.0026 | +0.0454 |
+
+Bold marks STK where it meets or exceeds the best per-instance ramp (as in the
+manuscript's Table); note that at `p=3` the descriptor mean's `0.8925` is
+nominally the highest final ratio, statistically indistinguishable from STK's
+`0.8902`.
 
 At the primary depth `p=2`, STK attains the best one-shot ratio (`0.8449`) by a
 decisive margin over the ramps (`0.8032` topology, `0.7483` spectral) and the
@@ -191,20 +199,27 @@ deterministically regenerates every table, figure, and macro from a fixed
 configuration and seed:
 
 ```bash
-stk-reproduce                                 # reported scale (configs/full.yaml, seed 0)
-stk-reproduce --config configs/smoke.yaml     # laptop-scale check (a few seconds)
-stk-reproduce --skip-run                       # rebuild tables/figures from an existing summary
+stk-reproduce                                 # reported scale (configs/full.yaml, seed 0), ~7 min
+stk-reproduce --quick                         # smoke-scale check (configs/smoke.yaml), a few seconds
+stk-reproduce --skip-run                      # rebuild tables/figures from an existing summary
 ```
 
-The reported-scale run (`configs/full.yaml`) takes a few minutes on a laptop CPU
-and writes:
+The reported-scale run (`configs/full.yaml`) took 423 s (about seven minutes) at
+163 MB peak memory on a laptop CPU (recorded in `results/summary.json`
+provenance) and writes, mirroring into the manuscript's `figures/` and `tables/`:
 
 | Artifact | Produced by | Read by the manuscript as |
 | --- | --- | --- |
 | `results/summary.json` | `scripts/run.py` | source of truth (per-policy approx. ratios with 95% CIs, one-shot ratios, queries-to-target, hit rate, budget frontier, per-family breakdown, provenance) |
-| `results/macros.tex` | `scripts/make_tables.py` | `\input{code/results/macros.tex}` (every scalar the prose cites) |
-| `results/tab_main.tex`, `tab_depth.tex`, `tab_family.tex`, `tab_frontier.tex` | `scripts/make_tables.py` | `\input{...}` table bodies |
-| `figures/fig_schematic.pdf`, `fig_depth.pdf`, `fig_frontier.pdf`, `fig_family.pdf` | `scripts/make_figures.py` | `\includegraphics{...}` |
+| `results/macros.tex` | `scripts/make_tables.py` | `\input{tables/macros.tex}` (every scalar the prose cites) |
+| `results/tab_main.tex` | `scripts/make_tables.py` | `\input{tables/tab_main.tex}` — Table II (per-policy, `p=2`) |
+| `results/tab_depth.tex` | `scripts/make_tables.py` | `\input{tables/tab_depth.tex}` — Table I (ratio vs depth) |
+| `results/tab_family.tex` | `scripts/make_tables.py` | `\input{tables/tab_family.tex}` — Appendix Table III (per family) |
+| `results/tab_frontier.tex` | `scripts/make_tables.py` | `\input{tables/tab_frontier.tex}` — Appendix Table IV (frontier) |
+| `figures/fig_schematic.pdf` | `topoqaoa.plotting.fig_schematic` via `scripts/make_figures.py` | Fig. 1 (pipeline schematic) |
+| `figures/fig_depth.pdf` | `topoqaoa.plotting.fig_depth` | Fig. 2 (ratio and paired advantage vs depth) |
+| `figures/fig_frontier.pdf` | `topoqaoa.plotting.fig_frontier` | Fig. 3 (query-budget frontier per depth) |
+| `figures/fig_family.pdf` | `topoqaoa.plotting.fig_family_bars` | Fig. 4 (per-family bars) |
 
 The equivalent Makefile targets operate on the source tree: `make test`,
 `make demo`, `make full-run`, `make tables`, `make figures`, `make audit`.

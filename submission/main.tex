@@ -12,11 +12,12 @@
 \usepackage{microtype}
 \usepackage[hidelinks]{hyperref}
 
-\graphicspath{{code/figures/}}
+\graphicspath{{figures/}{code/figures/}}
 
 % Convenience macros. \sync{...} is the identity, marking values that originate from
 % the generated results: every numerical value in this manuscript is read from the
-% auto-generated macro file code/results/macros.tex, so nothing is typed by hand.
+% auto-generated macro file tables/macros.tex (mirrored by stk-reproduce from
+% code/results/macros.tex), so nothing is typed by hand.
 % \ket / \bra / \expval render QAOA quantities.
 \newcommand{\sync}[1]{#1}
 \newcommand{\ket}[1]{\left\lvert #1 \right\rangle}
@@ -24,7 +25,7 @@
 \newcommand{\expval}[1]{\left\langle #1 \right\rangle}
 \newcommand{\abs}[1]{\left\lvert #1 \right\rvert}
 \newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
-\input{code/results/macros.tex}
+\input{tables/macros.tex}
 
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}
@@ -44,7 +45,7 @@
 \date{\today}
 
 \begin{abstract}
-Training a variational quantum circuit is stochastic optimization over an objective a quantum device only ever samples, so the scarce resource is queries to that estimator and the effective lever is a good statistical prior over where the optimum lies. We build such a prior as a kernel over graphs: we introduce the spectral-truncation kernel (STK), a relabeling-invariant, positive-definite graph kernel that transfers an optimized QAOA angle schedule from the most similar training graph, and use it to overturn the prevailing depth-one verdict that learned warm starts only match physics-based initializers. The cost of the quantum approximate optimization algorithm is dominated by the circuit evaluations spent searching for good angles, and a topology-aware warm start removes that search only if it beats a simple ramp; prior comparisons, formed at circuit depth one, find no such margin. STK represents each graph by a finite low-frequency window of its normalized-Laplacian spectrum, the modes that fix the schedule, and donates the kernel-nearest graph's depth-$p$ schedule. On a query-counted MaxCut benchmark over $\Ngraphs$ connected graphs from six families under family-held-out splits, STK reproduces the depth-one parity (paired advantage $\deltaStkRampPI\pm\ciDeltaStkRampPI$) and then beats the strongest adiabatic ramp by a margin that grows monotonically with depth, from $\deltaStkRampPII$ at $p{=}2$ to $\deltaStkRampPIII$ at $p{=}3$, and by a wider one-shot margin still, $\deltaStkRampFqPII$ at $p{=}2$ and $\deltaStkRampFqPIII$ at $p{=}3$, since the transferred schedule is near-optimal on the first query. The depth-one objective is cross-verified by two independent evaluators, and an accompanying package regenerates every reported number from fixed seeds.
+Training a variational quantum circuit is stochastic optimization over an objective a quantum device only ever samples, so the scarce resource is queries to that estimator and the effective lever is a good statistical prior over where the optimum lies. We build such a prior as a kernel over graphs: we introduce the spectral-truncation kernel (STK), a relabeling-invariant, positive-definite graph kernel that transfers an optimized QAOA angle schedule from the most similar training graph, and use it to overturn the prevailing depth-one verdict that learned warm starts only match physics-based initializers. The cost of the quantum approximate optimization algorithm is dominated by the circuit evaluations spent searching for good angles, and a topology-aware warm start removes that search only if it beats a simple ramp; prior comparisons, formed at circuit depth one, find no such margin. STK represents each graph by a finite low-frequency window of its normalized-Laplacian spectrum, the modes that fix the schedule, and donates the kernel-nearest graph's depth-$p$ schedule. On a query-counted MaxCut benchmark over $\Ngraphs$ connected graphs from six families under family-held-out splits, STK reproduces the depth-one parity (paired advantage $\deltaStkRampPI\pm\ciDeltaStkRampPI$) and then beats the strongest adiabatic ramp by a margin that grows monotonically with depth, from $\deltaStkRampPII$ at $p{=}2$ to $\deltaStkRampPIII$ at $p{=}3$, and by a wider one-shot margin still, $\deltaStkRampFqPII$ at $p{=}2$ and $\deltaStkRampFqPIII$ at $p{=}3$, since the transferred schedule is near-optimal on the first query. Three deliverables make the claim checkable: proofs that the kernel is relabeling invariant and positive definite and that kernel schedule regression obeys a representer theorem, a truncation-error bound, and a generalization bound with linear-in-depth sample complexity; a depth-one objective cross-verified by two independent evaluators; and the \texttt{pip}-installable package \texttt{specops-stk}, whose single command \texttt{stk-reproduce} regenerates every figure, table, and number from fixed seeds.
 \end{abstract}
 
 \maketitle
@@ -59,7 +60,13 @@ A warm start, which supplies good initial angles so the optimizer begins inside 
 
 That verdict is an artifact of depth one, which we show by moving beyond it, where a warm start must specify an entire $2p$-angle schedule rather than a single scale. Three observations organize the analysis. First, the depth-one parity is real but misleading: under a matched query budget every structure-aware policy ties an adiabatic ramp at $p{=}1$, which we reproduce exactly. Second, topology helps beyond depth one, because as $p$ grows the instance-optimal schedule becomes a higher-dimensional object that a single physical scale can only crudely approximate, opening room for a fully topology-conditioned policy. Third, transferring a single optimized schedule is a more query-efficient form of that help than averaging. The QAOA landscape is multimodal: the optimal schedules of different graphs occupy distinct, symmetry-related basins, equally good optima separated by inferior regions. Copying one optimized schedule from a sufficiently similar graph lands the optimizer inside a genuine basin and is near-optimal on the first query, whereas regressing several schedules toward their mean places the seed between basins, a region the refiner must climb out of before it can improve. What remains is to identify which invariant notion of graph similarity governs schedule transfer.
 
-We answer it with the spectral-truncation kernel (STK) (Fig.~\ref{fig:schematic}). Each graph is represented by a finite low-frequency window of its normalized-Laplacian spectrum, a spectral truncation of the graph operator that adapts the $C^{*}$-algebraic spectral-truncation kernels of Hashimoto \textit{et al.}~\cite{hashimoto2024spectral} from operators to graphs, and the kernel-nearest training graph donates its schedule. The truncated spectrum is a relabeling invariant, so the kernel is provably invariant and positive definite and the warm start is a deterministic function of the isomorphism class. This work makes three contributions. (i) We introduce STK and prove its invariance and positive-definiteness, yielding a transferable warm-start operator that is a deterministic class function of the graph. (ii) We show, within a controlled and reproducible benchmark, that the depth-one ``learned warm starts only match'' verdict is an artifact of $p{=}1$: topology-conditioned warm starts tie the ramp at $p{=}1$ and beat it for $p\ge2$ by a margin that grows with depth, from $\deltaStkRampPII$ at $p{=}2$ to $\deltaStkRampPIII$ at $p{=}3$, while STK transfer, near-optimal on the first query, beats the ramp by even more on the one-shot ratio than on the final ratio at every depth ($\deltaStkRampFqPII$ versus $\deltaStkRampPII$ at $p{=}2$, $\deltaStkRampFqPIII$ versus $\deltaStkRampPIII$ at $p{=}3$) and attains the best one-shot ratio of any policy through $p{=}2$. (iii) We supply the benchmark itself as a reusable yardstick: a proven relabeling-invariant descriptor and kernel, a depth-one objective cross-verified to $10^{-9}$ by two independent evaluators, exact approximation ratios against a brute-force MaxCut oracle, family-held-out transfer with a programmatic leakage check, and a \texttt{pip}-installable package that regenerates every figure, table, and number from fixed seeds.
+We answer it with the spectral-truncation kernel (STK) (Fig.~\ref{fig:schematic}). Each graph is represented by a finite low-frequency window of its normalized-Laplacian spectrum, a spectral truncation of the graph operator that adapts the $C^{*}$-algebraic spectral-truncation kernels of Hashimoto \textit{et al.}~\cite{hashimoto2024spectral} from operators to graphs, and the kernel-nearest training graph donates its schedule. The truncated spectrum is a relabeling invariant, so the kernel is provably invariant and positive definite and the warm start is a deterministic function of the isomorphism class. Our contributions are fourfold.
+\begin{enumerate}
+\item \emph{Statistical theory.} We prove that the truncated spectrum and the full descriptor are relabeling invariant (Corollary~\ref{cor:specinv}, Theorem~\ref{thm:qaoa-invariance}) and that STK is positive definite, making the warm start a deterministic function of the isomorphism class (Proposition~\ref{prop:kernel}, Corollary~\ref{cor:transfer}). Because the Born rule makes every landscape evaluation an estimate (Lemma~\ref{lem:born}), we then give the transfer its inferential footing: a representer theorem for kernel schedule regression (Theorem~\ref{thm:representer}), a truncation-error bound for the rank-$r$ spectral window (Proposition~\ref{prop:truncation}), a Rademacher generalization bound with sample complexity linear in depth (Theorem~\ref{thm:generalization}, Corollary~\ref{cor:samplecomplexity}), and a beyond-depth-one transfer guarantee (Theorem~\ref{thm:transfer}).
+\item \emph{Algorithm.} We introduce the STK warm-start operator, which transfers the optimized depth-$p$ schedule of the kernel-nearest training graph; it is implemented, with all baselines and the exact evaluators, in the \texttt{pip}-installable package \texttt{specops-stk}, whose single command \texttt{stk-reproduce} regenerates every figure, table, and number in this paper from fixed seeds.
+\item \emph{Empirical finding.} Within a controlled and reproducible benchmark we show that the depth-one ``learned warm starts only match'' verdict is an artifact of $p{=}1$: topology-conditioned warm starts tie the ramp at $p{=}1$ ($\deltaStkRampPI\pm\ciDeltaStkRampPI$) and beat it for $p\ge2$ by a margin that grows with depth, from $\deltaStkRampPII$ at $p{=}2$ to $\deltaStkRampPIII$ at $p{=}3$, while STK transfer, near-optimal on the first query, beats the ramp by even more on the one-shot ratio than on the final ratio at every depth ($\deltaStkRampFqPII$ versus $\deltaStkRampPII$ at $p{=}2$, $\deltaStkRampFqPIII$ versus $\deltaStkRampPIII$ at $p{=}3$) and attains the best one-shot ratio of any policy through $p{=}2$; at $p{=}3$ the averaging descriptor-mean learner draws statistically level with transfer.
+\item \emph{Benchmark.} We supply the benchmark itself as a reusable yardstick: a proven relabeling-invariant descriptor and kernel, a depth-one objective cross-verified to $10^{-9}$ by two independent evaluators, exact approximation ratios against a brute-force MaxCut oracle, and family-held-out transfer with a programmatic leakage check.
+\end{enumerate}
 
 This work is the depth-scaling installment of a program that treats spectral truncation of an operator as a unifying primitive for query-efficient quantum optimization. The program develops graph-conditioned trust regions for query-efficient QAOA and their uncertainty calibration~\cite{huynh2026gctr,huynh2026gctrcalpro}, quantifies the measurement cost of warm-started low-depth QAOA and the query budgets needed to certify it~\cite{huynh2026meascost,huynh2026certqb}, and establishes topology-conditioned parameter transfer for budgeted graph optimization~\cite{huynh2026paramxferB}. The operator-spectral truncated priors of~\cite{huynh2026ostqaoa} supply the descriptor most directly: the present spectral-truncation kernel makes that truncation the index of a relabeling-invariant similarity under which a single optimized schedule is transferred, and shows that the resulting warm start, null at $p{=}1$, separates from a single-scale ramp by a margin that grows with depth.
 
@@ -130,7 +137,7 @@ The picture changes qualitatively for $p\ge2$, where the warm start must specify
 \centering
 \caption{Held-out approximation ratio versus QAOA depth. For each depth we report the best per-instance adiabatic ramp, the averaging-based descriptor mean, the spectral-truncation-kernel transfer policy (STK, this work), the exact-optimum oracle ceiling, and the paired STK$-$ramp advantage on the final and one-shot ratios ($\Delta_{\mathrm{final}}$ with its $95\%$ confidence interval, and $\Delta_{\text{one-shot}}$). STK ties the ramp at $p{=}1$ and beats it by a margin that grows with depth; the descriptor mean also improves on the ramp at $p\ge2$ but with weaker one-shot quality. Bold marks STK where it meets or exceeds the ramp. Values are generated by \texttt{scripts/make\_tables.py} from \texttt{results/summary.json}.}
 \label{tab:depth}
-\input{code/results/tab_depth.tex}
+\input{tables/tab_depth.tex}
 \end{table*}
 
 \subsection{Per-policy performance and query efficiency}
@@ -140,7 +147,7 @@ Table~\ref{tab:main} reports, at the primary depth $p{=}\headlinedepth$, the hel
 \centering
 \caption{Per-policy warm-start benchmark at the primary depth $p{=}\headlinedepth$. Mean held-out depth-$\headlinedepth$ approximation ratio over $n=\Ngraphs$ family-held-out test evaluations ($\pm95\%$ confidence interval, $1.96\,s/\sqrt{n}$); one-shot ($q{=}1$) ratio; mean queries to reach the $0.95$ target (capped at the budget $B=\budgetval$); and target hit rate. STK attains the best final and one-shot ratios; the descriptor mean reaches a competitive final ratio but a much weaker one-shot ratio. Bold marks the highest value in the final-ratio column. Values transcribed by code from \texttt{results/summary.json}.}
 \label{tab:main}
-\input{code/results/tab_main.tex}
+\input{tables/tab_main.tex}
 \end{table*}
 
 \subsection{Query-budget frontier}
@@ -345,12 +352,15 @@ The kernel of Eq.~\eqref{eq:kernel} is itself built from a rank-$r$ spectral tru
 \label{prop:truncation}
 For any two graphs $G,G'$ with full spectra padded to a common length,
 \begin{equation}
-\abs{k_\infty(G,G')-k(G,G')}\;\le\;\frac{1}{2\ell_s^2}\Big(T_r(G)+T_r(G')\Big),\quad T_r(G):=\!\!\sum_{j>r}\mu_j(G)^2 ,
+\begin{gathered}
+\abs{k_\infty(G,G')-k(G,G')}\;\le\;\frac{1}{2\ell_s^2}\Big(T_r(G)+T_r(G')\Big),\\
+T_r(G):=\sum_{j>r}\mu_j(G)^2 ,
+\end{gathered}
 \label{eq:tailbound}
 \end{equation}
 so the kernel error is controlled by the tail energy of the discarded high-frequency modes; if the retained window captures a fraction $1-\varepsilon_r$ of the spectral energy, $T_r(G)\le\varepsilon_r\norm{\sigma_\infty(G)}_2^2\le\varepsilon_r\,(n-1)$, since $\mu_j\le 2$ for the normalized Laplacian. Moreover, writing $\widehat f_\infty,\widehat f$ for the predictors of Theorem~\ref{thm:representer} built from $k_\infty,k$ on the same training set, and $\Delta K=K_\infty-K$, the predictors satisfy the perturbation bound
 \begin{equation}
-\norm{\widehat f_\infty(G)-\widehat f(G)}_2\;\le\;\frac{\norm{\Theta_{\mathrm{tr}}}_2}{N\lambda}\Big(\norm{\Delta K}_2\,\tfrac{\norm{\bm k_G}_2}{N\lambda}+\norm{\Delta\bm k_G}_2\Big),
+\norm{\widehat f_\infty(G)-\widehat f(G)}_2\le\frac{\norm{\Theta_{\mathrm{tr}}}_2}{N\lambda}\big(\norm{\Delta K}_2\tfrac{\norm{\bm k_G}_2}{N\lambda}+\norm{\Delta\bm k_G}_2\big),
 \label{eq:predperturb}
 \end{equation}
 where $\norm{\cdot}_2$ on matrices is the spectral norm; thus the fitted schedules move by $O(T_r/(\ell_s^2\lambda))$ under truncation, and the transfer is stable whenever the retained low-frequency window carries the bulk of the spectral energy.
@@ -435,7 +445,7 @@ Read more broadly, STK is a small instance of a statistical stance on quantum co
 Several limitations bound these conclusions and indicate natural extensions. Graphs are small ($n\le16$) so that exact MaxCut is tractable for ground-truth ratios; the statevector evaluator scales further, but exact oracles do not, and behavior at sizes where QAOA might offer a quantum advantage~\cite{guerreschi2019qaoa} is untested. The transfer targets are near-optimal schedules from an \textsc{interp}-seeded optimizer rather than certified global optima; a better labelling oracle could only raise the transfer ceiling, and the comparison with the label-free ramps is unaffected. The kernel is a fixed product of two radial basis functions with median-heuristic bandwidths and a fixed truncation order; a learned or task-weighted kernel may widen the margin. Objective values are noiseless classical evaluations without shot or device noise, the graph families are synthetic, and confidence intervals are over the held-out graphs within a single seeded run rather than over independent dataset redraws. None of these alters the present, carefully scoped claim: for depth-$p$ QAOA MaxCut on these families and budgets, spectral-truncation-kernel transfer of angle schedules ties an adiabatic ramp at $p{=}1$ and beats it at $p{=}2,3$ by a margin that grows with depth, and by even more on the one-shot ratio than on the final ratio at each depth. We make no quantum-hardware or asymptotic-advantage claim; the result identifies where learned QAOA warm starts help, namely beyond depth one, and supplies a transferable, theoretically grounded operator that does so.
 
 \section*{Data and code availability}
-This study uses no external datasets; all graphs are generated synthetically from fixed random seeds (master seed $\seedval$) by the accompanying code. The complete machine-readable results record \texttt{results/summary.json}, which contains per-policy and per-depth ratios and confidence intervals, query-budget frontier curves, per-family breakdowns, the paired advantage-versus-depth block, and run provenance, accompanies this manuscript and is the single source of truth for every number, table, and figure. The reference implementation is the CPU-only \texttt{pip}-installable package \texttt{topoqaoa}, depending on NumPy~\cite{harris2020array}, SciPy~\cite{virtanen2020scipy}, NetworkX~\cite{hagberg2008exploring}, scikit-learn~\cite{pedregosa2011scikit}, and Matplotlib, with no quantum-software dependency. It contains the graph generators, the relabeling-invariant descriptors and the spectral-truncation kernel, the analytic and statevector QAOA evaluators, the \textsc{interp}-seeded schedule-labelling oracle, the budgeted refiner, all five warm-start policies, the family-held-out splitting and leakage checks, the metrics, the experiment runner, the figure and table generators, and the test suite (including the closed-form versus statevector, descriptor- and kernel-invariance, and kernel positive-definiteness checks). The reported run used Python~\verPython, NumPy~\verNumpy, SciPy~\verScipy, NetworkX~\verNetworkx, scikit-learn~\verSklearn, and Matplotlib~\verMatplotlib, completing in \SI{\runtimeval}{\second} at \SI{\peakmem}{\mega\byte} peak memory on a single laptop CPU. Installation is \texttt{pip install ./submission/code}; reproduction is \texttt{topoqaoa-reproduce --config configs/full.yaml}. The package will be released in a public repository upon publication.
+This study uses no external datasets; all graphs are generated synthetically from fixed random seeds (master seed $\seedval$) by the accompanying code. The complete machine-readable results record \texttt{results/summary.json}, which contains per-policy and per-depth ratios and confidence intervals, query-budget frontier curves, per-family breakdowns, the paired advantage-versus-depth block, and run provenance, accompanies this manuscript and is the single source of truth for every number, table, and figure. The reference implementation is the CPU-only \texttt{pip}-installable package \texttt{specops-stk} (imported as \texttt{topoqaoa}), depending on NumPy~\cite{harris2020array}, SciPy~\cite{virtanen2020scipy}, NetworkX~\cite{hagberg2008exploring}, scikit-learn~\cite{pedregosa2011scikit}, and Matplotlib, with no quantum-software dependency. It contains the graph generators, the relabeling-invariant descriptors and the spectral-truncation kernel, the analytic and statevector QAOA evaluators, the \textsc{interp}-seeded schedule-labelling oracle, the budgeted refiner, all five warm-start policies, the family-held-out splitting and leakage checks, the metrics, the experiment runner, the figure and table generators, and the test suite (including the closed-form versus statevector, descriptor- and kernel-invariance, and kernel positive-definiteness checks). The reported run used Python~\verPython, NumPy~\verNumpy, SciPy~\verScipy, NetworkX~\verNetworkx, scikit-learn~\verSklearn, and Matplotlib~\verMatplotlib, completing in \SI{\runtimeval}{\second} at \SI{\peakmem}{\mega\byte} peak memory on a single laptop CPU. Installation is \texttt{pip install specops-stk} (or \texttt{pip install ./submission/code} from the accompanying sources); reproduction is the single command \texttt{stk-reproduce}, which reruns the full pipeline at the reported scale in about seven minutes on a laptop CPU, while \texttt{stk-reproduce --quick} runs a smoke-scale check in seconds and \texttt{stk-reproduce --skip-run} replots every figure and table from the shipped \texttt{results/summary.json}. The sources are maintained at \url{https://github.com/thmolena/Topological-Graph-for-QAOA}.
 
 \appendix
 
@@ -447,14 +457,14 @@ Tables~\ref{tab:extfamily} and~\ref{tab:extfrontier} give two further numerical 
 \centering
 \caption{Per-family held-out approximation ratio at $p{=}\headlinedepth$. Mean depth-$\headlinedepth$ approximation ratio $\pm95\%$ confidence interval ($1.96\,s/\sqrt{n}$) for each policy, with each family held out in turn. Bold marks the best mean in each row. This is the numerical companion to Fig.~\ref{fig:family}. Source: \texttt{results/summary.json} (primary-depth \texttt{by\_family}).}
 \label{tab:extfamily}
-\resizebox{\textwidth}{!}{\input{code/results/tab_family.tex}}
+\resizebox{\textwidth}{!}{\input{tables/tab_family.tex}}
 \end{table*}
 
 \begin{table*}[t]
 \centering
 \caption{Query-budget frontier at $p{=}\headlinedepth$. Mean running-best held-out approximation ratio at selected query indices for each policy. The running best is monotone non-decreasing in $q$ (Proposition~\ref{prop:monotone}); STK starts highest and stays above the ramps. This is the numerical companion to Fig.~\ref{fig:frontier}. Source: \texttt{results/summary.json} (primary-depth \texttt{frontier}).}
 \label{tab:extfrontier}
-\input{code/results/tab_frontier.tex}
+\input{tables/tab_frontier.tex}
 \end{table*}
 
 \section{A self-contained account of the constructions}
@@ -489,7 +499,7 @@ Transfer targets are near-optimal schedules found by \textsc{interp}-seeded opti
 Transfer is tested family-held-out: to evaluate a family $F$, the learned policies are fit only on the other five families. A fingerprint (family, $n$, $\abs{E}$, hashed degree sequence) checks that no test graph appears in training (\texttt{leakage\_clean}${=}\,$\leakageclean). The primary metric is the exact approximation ratio $\expval{C}/C^\star\in[0,1]$; advantages over baselines are paired across graphs with a $95\%$ confidence interval $1.96\,s/\sqrt{n}$ on the paired difference. \texttt{runner.py} ties everything together and writes \texttt{results/summary.json}, the single source of truth from which every table, figure, and macro is generated, with nothing entered by hand.
 
 \subsection{Reproducing the run}
-From \texttt{submission/code/} (after \texttt{pip install .}, or with \texttt{PYTHONPATH=src}): \texttt{make test} runs the cross-checks ($10^{-9}$, $10^{-8}$, and kernel positive-definiteness); \texttt{python3 scripts/run.py --config configs/full.yaml --out results} produces the results record; \texttt{python3 scripts/make\_tables.py} writes the macros and tables; and \texttt{python3 scripts/make\_figures.py} writes the four figure PDFs. The reported run uses $\Ngraphs$ graphs across $\Nfamilies$ families, depths $1,2,3$, budget $\budgetval$, and seed $\seedval$, for which STK ties the ramp at $p{=}1$ and beats it by $\deltaStkRampPIII$ (final) at $p{=}3$.
+The installed console command \texttt{stk-reproduce} (package \texttt{specops-stk}) performs the whole pipeline and mirrors the outputs into the manuscript tree; \texttt{stk-reproduce --quick} runs the smoke-scale configuration in seconds, and \texttt{stk-reproduce --skip-run} rebuilds the tables and figures from an existing \texttt{results/summary.json}. Equivalently, from \texttt{submission/code/} (after \texttt{pip install .}, or with \texttt{PYTHONPATH=src}): \texttt{make test} runs the cross-checks ($10^{-9}$, $10^{-8}$, and kernel positive-definiteness); \texttt{python3 scripts/run.py --config configs/full.yaml --out results} produces the results record; \texttt{python3 scripts/make\_tables.py} writes the macros and tables; and \texttt{python3 scripts/make\_figures.py} writes the four figure PDFs. The reported run uses $\Ngraphs$ graphs across $\Nfamilies$ families, depths $1,2,3$, budget $\budgetval$, and seed $\seedval$, for which STK ties the ramp at $p{=}1$ and beats it by $\deltaStkRampPIII$ (final) at $p{=}3$.
 
 \subsection{Scope of the result}
 At depth one a learned topology warm start and a one-line adiabatic ramp reach the same approximation ratio, because both encode the same single-scale signal. As depth grows the warm start must specify a whole schedule, and topology-conditioned warm starts beat the ramp by a margin that grows with depth. Transferring one optimized schedule from the spectrally nearest graph is near-optimal on the first query: at $p{=}1$ and $p{=}2$ this gives transfer the best one-shot ratio, while averaging-based learning must still repair a between-basins seed, and by $p{=}3$ the two draw level. The result is a transferable, theoretically grounded warm-start operator and a controlled, cross-verified, leakage-checked benchmark that isolates where learned QAOA warm starts help. No quantum-hardware or asymptotic-advantage claim is made; the depth is at most three, the sizes are $n\le16$, and the graphs are synthetic.
@@ -502,8 +512,10 @@ This appendix gives the deferred proofs of Sec.~\ref{sec:learning}. Throughout, 
 \label{app:representer}
 Fix a coordinate $a\in\{1,\dots,2p\}$ and consider the scalar problem
 \begin{equation}
-\widehat f^{(a)}=\arg\min_{g\in\mathcal H_k}\;J_a(g),\qquad
+\begin{gathered}
+\widehat f^{(a)}=\arg\min_{g\in\mathcal H_k}\;J_a(g),\\
 J_a(g)=\frac1N\sum_{i=1}^N\big(g(G_i)-\theta_i^{(a)}\big)^2+\lambda\norm{g}_{\mathcal H_k}^2 .
+\end{gathered}
 \end{equation}
 \emph{Existence and uniqueness.} $J_a$ is a sum of a convex quadratic data term and the strictly convex, coercive penalty $\lambda\norm{g}_{\mathcal H_k}^2$ ($\lambda>0$), hence strictly convex and coercive on the Hilbert space $\mathcal H_k$; a strictly convex coercive functional on a Hilbert space has a unique minimizer.
 
@@ -527,7 +539,10 @@ Write the spectral factor as $k_s(G,G')=g\big(D_s(G,G')\big)$ with $g(x)=\exp(-x
 \end{equation}
 Padding both spectra to a common length, the two squared distances differ only in the coordinates $j>r$: $D_s^\infty-D_s^r=\sum_{j>r}(\mu_j(G)-\mu_j(G'))^2\ge0$. Bounding $(\mu_j(G)-\mu_j(G'))^2\le 2\mu_j(G)^2+2\mu_j(G')^2$ (from $(a-b)^2\le2a^2+2b^2$) gives
 \begin{equation}
-\big\lvert D_s^\infty-D_s^r\big\rvert\le 2\!\sum_{j>r}\mu_j(G)^2+2\!\sum_{j>r}\mu_j(G')^2=2\big(T_r(G)+T_r(G')\big),
+\begin{multlined}
+\big\lvert D_s^\infty-D_s^r\big\rvert\le 2\!\sum_{j>r}\mu_j(G)^2+2\!\sum_{j>r}\mu_j(G')^2\\
+=2\big(T_r(G)+T_r(G')\big),
+\end{multlined}
 \end{equation}
 and combining yields Eq.~\eqref{eq:tailbound}. (For unstandardized features the same holds with $\ell_s$ absorbing the per-coordinate scale; standardization is a fixed diagonal rescaling that only changes the constant.) Since the normalized-Laplacian spectrum lies in $[0,2]$, $\mu_j\le2$, and if the retained window holds a fraction $1-\varepsilon_r$ of $\norm{\sigma_\infty}_2^2$ then $T_r(G)\le\varepsilon_r\norm{\sigma_\infty(G)}_2^2\le\varepsilon_r\cdot 2^2(n-1)$; the coarser bound $T_r\le\varepsilon_r(n-1)$ quoted in the text follows when the tail eigenvalues are $\le1$, i.e.\ within the low-frequency regime the truncation targets.
 
@@ -577,7 +592,11 @@ Inserting the Step-2 bound $2\cdot\tfrac12\sqrt{2p}\,L_\theta\Lambda\kappa/\sqrt
 \end{align}
 the last step by the stability hypothesis~\eqref{eq:schedule-lipschitz}. Applying the landscape Lipschitz bound to $F_p(G,\cdot)$ between $\theta^\star(G)$ and $\widehat\theta$,
 \begin{equation}
-F_p(G,\theta^\star(G))-F_p(G,\widehat\theta)\le L_\theta^{(p)}\norm{\widehat\theta-\theta^\star(G)}_2\le L_\theta^{(p)}\big(\epsilon_{\mathrm{lab}}+L_G^{(p)}d_k(G,G_j)\big),
+\begin{aligned}
+F_p(G,\theta^\star(G))-F_p(G,\widehat\theta)
+&\le L_\theta^{(p)}\norm{\widehat\theta-\theta^\star(G)}_2\\
+&\le L_\theta^{(p)}\big(\epsilon_{\mathrm{lab}}+L_G^{(p)}d_k(G,G_j)\big),
+\end{aligned}
 \end{equation}
 which is Eq.~\eqref{eq:transferbound}, using $F_p(G,\theta^\star(G))\ge F_p(G,\widehat\theta)$ so the difference is nonnegative. By Proposition~\ref{prop:monotone} the refiner is monotone and pinned at its warm start, so the refined regret is no larger than the one-shot regret just bounded.
 
